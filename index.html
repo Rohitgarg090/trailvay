@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrAilVay - Intelligent Discovery for Solo Travelers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrGAI7dpzysJuVdSSCAkkE5Irkh5_-cRQ&libraries=places"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #059669 0%, #10b981 50%, #f59e0b 100%); }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Image Carousel Styles */
+        .image-carousel { position: relative; width: 100%; height: 100%; }
+        .carousel-images { display: flex; transition: transform 0.3s ease; height: 100%; }
+        .carousel-image { min-width: 100%; height: 100%; object-fit: cover; }
+        .carousel-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; z-index: 10; }
+        .carousel-nav:hover { background: rgba(0,0,0,0.7); }
+        .carousel-prev { left: 8px; }
+        .carousel-next { right: 8px; }
+        .carousel-dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 10; }
+        .carousel-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); cursor: pointer; }
+        .carousel-dot.active { background: white; }
+        
+        /* Expandable Card Styles */
+        .place-card { transition: all 0.3s ease; }
+        .place-card:hover { transform: translateY(-4px); }
+        .place-info { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+        .place-card:hover .place-info { max-height: 200px; }
+        .place-card:hover .quick-info { display: none; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center cursor-pointer" onclick="showPage('home')">
+                    <svg class="h-8 w-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="ml-2 text-2xl font-bold text-gray-800">
+                        Tr<span class="text-amber-500">AI</span>lVay
+                    </span>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a onclick="showPage('home')" class="text-gray-700 hover:text-emerald-600 font-medium cursor-pointer">Home</a>
+                    <a onclick="showPage('cities')" class="text-gray-700 hover:text-emerald-600 font-medium cursor-pointer">Cities</a>
+                    <button class="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white px-6 py-2 rounded-full font-semibold hover:from-emerald-700 hover:to-emerald-600">
+                        Download App
+                    </button>
+                </div>
+
+                <button onclick="toggleMobileMenu()" class="md:hidden">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="mobileMenu" class="md:hidden bg-white border-t hidden">
+            <div class="px-4 py-3 space-y-3">
+                <a onclick="showPage('home'); toggleMobileMenu();" class="block text-gray-700 hover:text-emerald-600 font-medium cursor-pointer">Home</a>
+                <a onclick="showPage('cities'); toggleMobileMenu();" class="block text-gray-700 hover:text-emerald-600 font-medium cursor-pointer">Cities</a>
+            </div>
+        </div>
+    </nav>
+
+    <div id="content"></div>
+
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <p class="text-gray-400 text-sm">© 2025 TrAilVay. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let map, markers = [], placesService, infoWindow, autocomplete;
+        let carouselIndices = {};
+        let currentPage = 1, itemsPerPage = 9;
+        let allAttractions = [], allHotels = [];
+        let userLocation = null;
+        const GOOGLE_API_KEY = 'AIzaSyBrGAI7dpzysJuVdSSCAkkE5Irkh5_-cRQ';
+
+        const cities = [
+            { name: 'London', country: 'United Kingdom', flag: '🇬🇧', attractions: 47, lat: 51.5074, lng: -0.1278 },
+            { name: 'Paris', country: 'France', flag: '🇫🇷', attractions: 52, lat: 48.8566, lng: 2.3522 },
+            { name: 'Tokyo', country: 'Japan', flag: '🇯🇵', attractions: 63, lat: 35.6762, lng: 139.6503 },
+            { name: 'New York', country: 'USA', flag: '🇺🇸', attractions: 71, lat: 40.7128, lng: -74.0060 }
+        ];
+
+        function getUserLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject('Geolocation not supported');
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+                        console.log('User location:', userLocation);
+                        resolve(userLocation);
+                    },
+                    (error) => {
+                        console.warn('Location access denied:', error);
+                        reject(error);
+                    }
+                );
+            });
+        }
+
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                     Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function getPlacePhotoUrl(photoReference, maxWidth = 600) {
+            if (!photoReference) return null;
+            return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photoreference=${photoReference}&key=${GOOGLE_API_KEY}`;
+        }
+
+        function getPlaceDetails(placeId) {
+            return new Promise((resolve) => {
+                if (!placesService) {
+                    resolve(null);
+                    return;
+                }
+                const request = {
+                    placeId: placeId,
+                    fields: ['name', 'rating', 'user_ratings_total', 'photos', 'formatted_address', 
+                             'website', 'types', 'editorial_summary', 'reviews', 'vicinity']
+                };
+                placesService.getDetails(request, (place, status) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK) {
+                        resolve(place);
+                    } else {
+                        resolve(null);
+                    }
+                });
+            });
+        }
+
+        function searchNearbyPlaces(location, keyword, radius) {
+            return new Promise((resolve) => {
+                if (!placesService) {
+                    console.error('Places service not available');
+                    resolve([]);
+                    return;
+                }
+                
+                const request = { location: location, radius: radius, keyword: keyword };
+                console.log('Places API request:', request);
+                
+                // Add timeout protection
+                const timeout = setTimeout(() => {
+                    console.error('Places search timed out after 10 seconds');
+                    resolve([]);
+                }, 10000);
+                
+                placesService.nearbySearch(request, (results, status) => {
+                    clearTimeout(timeout);
+                    console.log('Places API response - Status:', status, 'Results:', results?.length || 0);
+                    
+                    if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                        resolve(results);
+                    } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                        console.warn('No results found for:', keyword);
+                        resolve([]);
+                    } else {
+                        console.error('Places API error:', status);
+                        resolve([]);
+                    }
+                });
+            });
+        }
+
+        function searchByText(query, location) {
+            return new Promise((resolve) => {
+                if (!placesService) {
+                    console.error('Places service not available');
+                    resolve([]);
+                    return;
+                }
+                
+                // Build request - only include location/radius if location is provided
+                const request = { query: query };
+                if (location) {
+                    request.location = location;
+                    request.radius = 10000;
+                }
+                
+                console.log('Text search request:', request);
+                
+                const timeout = setTimeout(() => {
+                    console.error('Text search timed out after 10 seconds');
+                    resolve([]);
+                }, 10000);
+                
+                placesService.textSearch(request, (results, status) => {
+                    clearTimeout(timeout);
+                    console.log('Text search response - Status:', status, 'Results:', results?.length || 0);
+                    
+                    if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                        resolve(results);
+                    } else {
+                        console.error('Text search error:', status);
+                        resolve([]);
+                    }
+                });
+            });
+        }
+
+        function createImageCarousel(photos, placeName, cardId) {
+            if (!photos || photos.length === 0) {
+                return `
+                    <div class="h-64 bg-gray-200 flex items-center justify-center">
+                        <div class="text-gray-500 text-center p-4">
+                            <p class="text-4xl mb-2">📍</p>
+                            <p class="text-sm">No photos available</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const photoUrls = photos.slice(0, 5).map(photo => {
+                const photoRef = photo.photo_reference || photo.getUrl;
+                if (photoRef) {
+                    return typeof photoRef === 'function' 
+                        ? photo.getUrl({maxWidth: 800}) 
+                        : getPlacePhotoUrl(photoRef, 800);
+                }
+                return null;
+            }).filter(url => url !== null);
+
+            if (photoUrls.length === 0) {
+                return `
+                    <div class="h-64 bg-gray-200 flex items-center justify-center">
+                        <div class="text-gray-500 text-center p-4">
+                            <p class="text-4xl mb-2">📍</p>
+                            <p class="text-sm">No photos available</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="h-64 relative image-carousel" id="carousel-${cardId}">
+                    <div class="carousel-images h-full">
+                        ${photoUrls.map((url, index) => `
+                            <img src="${url}" 
+                                 alt="${placeName} - Image ${index + 1}" 
+                                 class="carousel-image ${index === 0 ? 'active' : ''}"
+                                 onerror="this.style.display='none';">
+                        `).join('')}
+                    </div>
+                    ${photoUrls.length > 1 ? `
+                        <button class="carousel-nav carousel-prev" onclick="moveCarousel('${cardId}', -1)">‹</button>
+                        <button class="carousel-nav carousel-next" onclick="moveCarousel('${cardId}', 1)">›</button>
+                        <div class="carousel-dots">
+                            ${photoUrls.map((_, index) => `
+                                <div class="carousel-dot ${index === 0 ? 'active' : ''}" onclick="goToSlide('${cardId}', ${index})"></div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function moveCarousel(cardId, direction) {
+            const carousel = document.getElementById(`carousel-${cardId}`);
+            if (!carousel) return;
+            const images = carousel.querySelectorAll('.carousel-image');
+            const dots = carousel.querySelectorAll('.carousel-dot');
+            if (!carouselIndices[cardId]) carouselIndices[cardId] = 0;
+            let currentIndex = carouselIndices[cardId];
+            currentIndex = (currentIndex + direction + images.length) % images.length;
+            carouselIndices[cardId] = currentIndex;
+            const imagesContainer = carousel.querySelector('.carousel-images');
+            imagesContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        }
+
+        function goToSlide(cardId, index) {
+            const carousel = document.getElementById(`carousel-${cardId}`);
+            if (!carousel) return;
+            const dots = carousel.querySelectorAll('.carousel-dot');
+            carouselIndices[cardId] = index;
+            const imagesContainer = carousel.querySelector('.carousel-images');
+            imagesContainer.style.transform = `translateX(-${index * 100}%)`;
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+        }
+
+        function getPlaceTypeDescription(types) {
+            if (!types || types.length === 0) return '';
+            const typeMap = {
+                'tourist_attraction': 'Tourist Attraction', 'museum': 'Museum', 'park': 'Park',
+                'art_gallery': 'Art Gallery', 'church': 'Church', 'shopping_mall': 'Shopping Mall',
+                'restaurant': 'Restaurant', 'cafe': 'Café', 'bar': 'Bar', 'lodging': 'Hotel',
+                'hotel': 'Hotel', 'spa': 'Spa', 'gym': 'Gym'
+            };
+            const relevantTypes = types.filter(type => typeMap[type]).map(type => typeMap[type]).slice(0, 3);
+            return relevantTypes.join(' • ') || 'Place of Interest';
+        }
+
+        function loadMoreAttractions() {
+            const container = document.getElementById('attractionsContainer');
+            const loadMoreBtn = document.getElementById('loadMoreAttractions');
+            const start = currentPage * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pagePlaces = allAttractions.slice(start, end);
+            
+            pagePlaces.forEach((place, index) => {
+                if (!place) return;
+                const cardId = `attraction-${start + index}`;
+                const types = getPlaceTypeDescription(place.types);
+                const summary = place.editorial_summary?.overview || '';
+                const distance = userLocation && place.geometry 
+                    ? calculateDistance(userLocation.lat, userLocation.lng, 
+                                       place.geometry.location.lat(), 
+                                       place.geometry.location.lng()).toFixed(1)
+                    : null;
+                
+                const card = document.createElement('div');
+                card.className = 'place-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all';
+                card.innerHTML = `
+                    ${createImageCarousel(place.photos, place.name, cardId)}
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">${place.name}</h3>
+                        <p class="text-sm text-emerald-600 mb-2">${types}</p>
+                        ${place.rating ? `
+                            <div class="flex items-center mb-2">
+                                <span class="text-amber-500 font-bold text-lg mr-2">★ ${place.rating.toFixed(1)}</span>
+                                <span class="text-gray-600 text-sm">(${place.user_ratings_total || 0} reviews)</span>
+                                ${distance ? `<span class="text-gray-500 text-xs ml-auto">📍 ${distance} km away</span>` : ''}
+                            </div>
+                        ` : ''}
+                        ${place.aiScore ? `
+                            <div class="bg-purple-50 border border-purple-200 rounded-lg px-3 py-1 mb-2">
+                                <span class="text-purple-700 text-xs font-semibold">✨ AI Score: ${place.aiScore.toFixed(1)}</span>
+                            </div>
+                        ` : ''}
+                        <div class="quick-info">
+                            <p class="text-gray-600 text-sm line-clamp-2">${place.formatted_address || place.vicinity || ''}</p>
+                        </div>
+                        <div class="place-info mt-3 pt-3 border-t border-gray-100">
+                            ${summary ? `<p class="text-gray-700 text-sm mb-3">${summary}</p>` : ''}
+                            <p class="text-gray-600 text-sm mb-2">${place.formatted_address || ''}</p>
+                            ${place.website ? `<a href="${place.website}" target="_blank" class="text-emerald-600 text-sm hover:underline">Visit Website →</a>` : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            currentPage++;
+            if (end >= allAttractions.length) {
+                loadMoreBtn.style.display = 'none';
+            }
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('hidden');
+        }
+
+        function showPage(page) {
+            const content = document.getElementById('content');
+            window.scrollTo(0, 0);
+            if (page === 'home') {
+                content.innerHTML = `
+                    <div class="gradient-bg text-white">
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+                            <div class="text-center">
+                                <h1 class="text-4xl md:text-6xl font-bold mb-6">Intelligent Discovery for Solo Travelers</h1>
+                                <p class="text-xl md:text-2xl mb-8 text-emerald-50">AI-powered guidance for your next adventure</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white shadow-lg -mt-8 mx-4 md:mx-auto max-w-4xl rounded-2xl p-6 relative z-10">
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <input id="mapSearchInput" type="text" placeholder="Search for a city like Dubai, London..." 
+                                   class="flex-1 pl-4 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none"/>
+                            <button onclick="searchLocation()" class="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-emerald-700">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                        <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Popular Cities</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            ${cities.map(city => `
+                                <div onclick="showCityGuide('${city.name}')" class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
+                                    <div class="p-6">
+                                        <div class="text-4xl mb-2">${city.flag}</div>
+                                        <h3 class="text-xl font-bold text-gray-800 mb-1">${city.name}</h3>
+                                        <p class="text-gray-600 mb-3">${city.country}</p>
+                                        <p class="text-sm text-gray-500">${city.attractions} attractions</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                // Initialize autocomplete after the input is rendered
+                setTimeout(() => {
+                    const input = document.getElementById('mapSearchInput');
+                    if (input && google.maps.places && !autocomplete) {
+                        autocomplete = new google.maps.places.Autocomplete(input, {
+                            types: ['(cities)']
+                        });
+                        console.log('Autocomplete initialized');
+                    }
+                }, 100);
+            } else if (page === 'cities') {
+                content.innerHTML = `
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4 text-center">Explore Cities</h1>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            ${cities.map(city => `
+                                <div onclick="showCityGuide('${city.name}')" class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
+                                    <div class="p-6">
+                                        <div class="text-4xl mb-2">${city.flag}</div>
+                                        <h3 class="text-xl font-bold text-gray-800 mb-1">${city.name}</h3>
+                                        <p class="text-gray-600 mb-3">${city.country}</p>
+                                        <p class="text-sm text-gray-500">${city.attractions} attractions</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function searchLocation() {
+            const input = document.getElementById('mapSearchInput').value.trim();
+            if (!input) {
+                alert('Please enter a location');
+                return;
+            }
+            
+            console.log('Searching for:', input);
+            
+            const city = cities.find(c => c.name.toLowerCase() === input.toLowerCase());
+            if (city) {
+                showCityGuide(city.name);
+            } else {
+                searchDynamicCity(input);
+            }
+        }
+
+        async function searchDynamicCity(locationName) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+                    <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-600" style="animation: spin 1s linear infinite;"></div>
+                    <p class="mt-4 text-xl text-gray-600">Searching for ${locationName}...</p>
+                    <p class="text-sm text-gray-500 mt-2">This should take less than 30 seconds</p>
+                </div>
+            `;
+            window.scrollTo(0, 0);
+
+            // Overall timeout of 30 seconds
+            const overallTimeout = setTimeout(() => {
+                console.error('Search operation timed out after 30 seconds');
+                content.innerHTML = `
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+                        <p class="text-xl text-red-600">Search timed out</p>
+                        <p class="text-gray-500 mt-2">The Google Maps API is taking too long to respond. This might be due to:</p>
+                        <ul class="text-gray-600 mt-4 text-left max-w-md mx-auto">
+                            <li>• API quota limits</li>
+                            <li>• Network connection issues</li>
+                            <li>• Too many requests</li>
+                        </ul>
+                        <button onclick="showPage('home')" class="mt-6 bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700">← Back to Home</button>
+                    </div>
+                `;
+            }, 30000);
+
+            try {
+                // Check if Places API is ready
+                if (!placesService) {
+                    clearTimeout(overallTimeout);
+                    console.error('Places service not initialized');
+                    content.innerHTML = `
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+                            <p class="text-xl text-red-600">Maps not ready. Please refresh the page.</p>
+                            <button onclick="location.reload()" class="mt-4 bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700">Refresh Page</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                console.log('Starting search for:', locationName);
+                
+                // Simple text search instead of geocoding
+                console.log('Using text search for simplicity...');
+                const searchResults = await searchByText(locationName + ' tourist attractions', null);
+                
+                console.log('Search completed. Found:', searchResults.length, 'results');
+
+                if (searchResults.length === 0) {
+                    clearTimeout(overallTimeout);
+                    content.innerHTML = `
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+                            <p class="text-xl text-gray-600">No attractions found for "${locationName}"</p>
+                            <p class="text-gray-500 mt-2">Try searching for: Dubai, London, Paris, Tokyo, New York</p>
+                            <button onclick="showPage('home')" class="mt-4 bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700">← Back to Home</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Process results
+                allAttractions = [];
+                const seenIds = new Set();
+                searchResults.forEach(r => {
+                    if (!seenIds.has(r.place_id) && r.rating && r.rating >= 3.0) {
+                        seenIds.add(r.place_id);
+                        allAttractions.push(r);
+                    }
+                });
+
+                console.log('After filtering:', allAttractions.length, 'attractions');
+
+                allAttractions.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                allAttractions = allAttractions.slice(0, 20);
+
+                console.log('Getting details for', allAttractions.length, 'attractions...');
+                const detailsPromises = allAttractions.map(a => getPlaceDetails(a.place_id));
+                const detailsResults = await Promise.all(detailsPromises);
+                allAttractions = detailsResults.filter(p => p !== null);
+
+                console.log('Got details for', allAttractions.length, 'attractions');
+
+                clearTimeout(overallTimeout);
+
+                if (allAttractions.length === 0) {
+                    content.innerHTML = `
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+                            <p class="text-xl text-gray-600">No detailed information available for ${locationName}</p>
+                            <button onclick="showPage('home')" class="mt-4 bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700">← Back to Home</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                currentPage = 1;
+                displayResults(locationName, locationName, 0, 0);
+
+            } catch (error) {
+                clearTimeout(overallTimeout);
+                console.error('Error in searchDynamicCity:', error);
+                content.innerHTML = `
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+                        <p class="text-xl text-red-600">Error: ${error.message}</p>
+                        <p class="text-gray-500 mt-2">Please try again or search for a different location</p>
+                        <button onclick="showPage('home')" class="mt-4 bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700">← Back to Home</button>
+                    </div>
+                `;
+            }
+        }
+
+        function displayResults(cityName, formattedAddress, lat, lng, isLocationBased = false) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="bg-gradient-to-br from-emerald-600 to-amber-500 text-white py-16">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="text-center">
+                            ${isLocationBased ? '<p class="text-sm opacity-90 mb-2">📍 Based on your current location</p>' : ''}
+                            <h1 class="text-4xl md:text-5xl font-bold mb-4">${cityName}</h1>
+                            <p class="text-xl mb-2">${formattedAddress}</p>
+                            <p class="text-lg opacity-90">${allAttractions.length} attractions found</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg -mt-8 mx-4 md:mx-auto max-w-4xl rounded-2xl p-6 relative z-10">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <input id="mapSearchInput" type="text" placeholder="Search for another city..." 
+                               class="flex-1 pl-4 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none"/>
+                        <button onclick="searchLocation()" class="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-emerald-700">
+                            Search
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                        ${isLocationBased ? 'Attractions Near You' : 'Top Attractions'}
+                    </h2>
+                    <div id="attractionsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                    ${allAttractions.length > 9 ? `
+                        <div class="text-center mt-8">
+                            <button id="loadMoreAttractions" onclick="loadMoreAttractions()" 
+                                    class="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-emerald-700">
+                                Load More
+                            </button>
+                        </div>
+                    ` : ''}
+                    <div class="mt-12 text-center">
+                        <button onclick="showPage('home')" class="text-emerald-600 font-semibold hover:underline">Browse Popular Cities</button>
+                    </div>
+                </div>
+            `;
+            
+            // Initialize autocomplete on the new search input
+            setTimeout(() => {
+                const input = document.getElementById('mapSearchInput');
+                if (input && google.maps.places) {
+                    autocomplete = new google.maps.places.Autocomplete(input, {
+                        types: ['(cities)']
+                    });
+                    console.log('Search autocomplete initialized');
+                }
+            }, 100);
+            
+            currentPage = 0;
+            loadMoreAttractions();
+        }
+
+        async function showCityGuide(cityName) {
+            const city = cities.find(c => c.name === cityName);
+            if (!city) return;
+
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+                    <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-600"></div>
+                    <p class="mt-4 text-xl text-gray-600">Loading ${city.name}...</p>
+                </div>
+            `;
+            window.scrollTo(0, 0);
+
+            if (!placesService) {
+                const mapDiv = document.createElement('div');
+                mapDiv.id = 'temp-map';
+                mapDiv.style.display = 'none';
+                document.body.appendChild(mapDiv);
+                map = new google.maps.Map(mapDiv, { zoom: 2, center: { lat: 0, lng: 0 } });
+                placesService = new google.maps.places.PlacesService(map);
+            }
+
+            const cityLocation = { lat: city.lat, lng: city.lng };
+            const attractionResults = await searchNearbyPlaces(cityLocation, 'tourist attraction', 5000);
+            
+            allAttractions = [];
+            const seenIds = new Set();
+            attractionResults.forEach(r => {
+                if (!seenIds.has(r.place_id) && r.rating && r.rating > 3.0) {
+                    seenIds.add(r.place_id);
+                    allAttractions.push(r);
+                }
+            });
+
+            allAttractions.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            allAttractions = allAttractions.slice(0, 30);
+
+            const detailsPromises = allAttractions.map(a => getPlaceDetails(a.place_id));
+            allAttractions = await Promise.all(detailsPromises);
+            allAttractions = allAttractions.filter(p => p !== null);
+
+            currentPage = 1;
+
+            content.innerHTML = `
+                <div class="bg-gradient-to-br from-emerald-600 to-amber-500 text-white py-16">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="text-center">
+                            <div class="text-6xl mb-4">${city.flag}</div>
+                            <h1 class="text-4xl md:text-5xl font-bold mb-4">${city.name}, ${city.country}</h1>
+                            <p class="text-lg opacity-90">${allAttractions.length} attractions found</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Must-See Attractions</h2>
+                    <div id="attractionsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                    ${allAttractions.length > 9 ? `
+                        <div class="text-center mt-8">
+                            <button id="loadMoreAttractions" onclick="loadMoreAttractions()" 
+                                    class="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-emerald-700">
+                                Load More
+                            </button>
+                        </div>
+                    ` : ''}
+                    <div class="mt-12 text-center">
+                        <button onclick="showPage('cities')" class="text-emerald-600 font-semibold">← Back to Cities</button>
+                    </div>
+                </div>
+            `;
+            currentPage = 0;
+            loadMoreAttractions();
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            const mapDiv = document.createElement('div');
+            mapDiv.id = 'hidden-map';
+            mapDiv.style.display = 'none';
+            document.body.appendChild(mapDiv);
+            
+            map = new google.maps.Map(mapDiv, {
+                zoom: 2,
+                center: { lat: 20, lng: 0 }
+            });
+            placesService = new google.maps.places.PlacesService(map);
+            infoWindow = new google.maps.InfoWindow();
+            
+            console.log('Maps initialized, requesting user location...');
+            
+            // Automatically request user location and show nearby attractions
+            showLocationBasedAttractions();
+        });
+
+        async function showLocationBasedAttractions() {
+            const content = document.getElementById('content');
+            
+            // Show loading screen while getting location
+            content.innerHTML = `
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+                    <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-600" style="animation: spin 1s linear infinite;"></div>
+                    <h2 class="text-2xl font-bold text-gray-800 mt-6 mb-3">Finding attractions near you...</h2>
+                    <p class="text-gray-600 mb-4">Getting your location (this may take up to 30 seconds)</p>
+                    <button onclick="showPage('home')" class="text-emerald-600 hover:underline">Skip and browse manually</button>
+                </div>
+            `;
+
+            try {
+                // Get user location with longer timeout and lower accuracy requirement
+                const position = await new Promise((resolve, reject) => {
+                    if (!navigator.geolocation) {
+                        reject(new Error('Geolocation not supported'));
+                        return;
+                    }
+                    
+                    console.log('Requesting geolocation...');
+                    
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            console.log('Got position:', pos.coords);
+                            resolve(pos);
+                        },
+                        (error) => {
+                            console.error('Geolocation error:', error);
+                            reject(error);
+                        },
+                        { 
+                            timeout: 30000,  // 30 seconds instead of 10
+                            enableHighAccuracy: false,  // Don't require GPS, WiFi/IP is fine
+                            maximumAge: 300000  // Accept cached position up to 5 minutes old
+                        }
+                    );
+                });
+
+                userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
+                console.log('User location acquired:', userLocation);
+
+                content.innerHTML = `
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+                        <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-600" style="animation: spin 1s linear infinite;"></div>
+                        <h2 class="text-2xl font-bold text-gray-800 mt-6">Finding attractions near you...</h2>
+                        <p class="text-gray-600">Discovering the best places to visit</p>
+                    </div>
+                `;
+
+                // Get city name from coordinates
+                const geocoder = new google.maps.Geocoder();
+                const latLng = new google.maps.LatLng(userLocation.lat, userLocation.lng);
+                
+                geocoder.geocode({ location: latLng }, async (results, status) => {
+                    let cityName = 'Your Area';
+                    
+                    if (status === 'OK' && results && results.length > 0) {
+                        // Find the locality (city) in the address components
+                        for (const result of results) {
+                            const cityComponent = result.address_components.find(
+                                component => component.types.includes('locality') || 
+                                           component.types.includes('administrative_area_level_2')
+                            );
+                            if (cityComponent) {
+                                cityName = cityComponent.long_name;
+                                break;
+                            }
+                        }
+                    }
+
+                    console.log('City name:', cityName);
+
+                    // Search for nearby attractions
+                    const location = new google.maps.LatLng(userLocation.lat, userLocation.lng);
+                    let attractionResults = await searchNearbyPlaces(location, 'tourist attraction', 5000);
+                    
+                    if (attractionResults.length === 0) {
+                        console.log('No tourist attractions, trying points of interest...');
+                        attractionResults = await searchNearbyPlaces(location, 'point of interest', 10000);
+                    }
+
+                    console.log('Found', attractionResults.length, 'nearby attractions');
+
+                    if (attractionResults.length === 0) {
+                        // Fallback to homepage if no attractions found
+                        console.log('No attractions found nearby, showing homepage');
+                        showPage('home');
+                        return;
+                    }
+
+                    allAttractions = [];
+                    const seenIds = new Set();
+                    attractionResults.forEach(r => {
+                        if (!seenIds.has(r.place_id) && r.rating && r.rating >= 3.0) {
+                            seenIds.add(r.place_id);
+                            allAttractions.push(r);
+                        }
+                    });
+
+                    allAttractions.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                    allAttractions = allAttractions.slice(0, 30);
+
+                    console.log('Getting details for', allAttractions.length, 'attractions...');
+                    const detailsPromises = allAttractions.map(a => getPlaceDetails(a.place_id));
+                    const detailsResults = await Promise.all(detailsPromises);
+                    allAttractions = detailsResults.filter(p => p !== null);
+
+                    console.log('Successfully got details for', allAttractions.length, 'attractions');
+
+                    currentPage = 1;
+                    displayResults(cityName, `Near ${cityName}`, userLocation.lat, userLocation.lng, true);
+                });
+
+            } catch (error) {
+                console.log('Location request failed or denied:', error.message);
+                // Show normal homepage if location is denied or times out
+                showPage('home');
+            }
+        }
+    </script>
+</body>
+</html>
