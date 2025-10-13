@@ -66,6 +66,22 @@
             color: #9ca3af;
         }
         
+        .location-icon {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px;
+            border-radius: 8px;
+        }
+        
+        .location-icon:hover {
+            background: #f3f4f6;
+            transform: scale(1.1);
+        }
+        
+        .location-icon:active {
+            transform: scale(0.95);
+        }
+        
         .destination-card {
             position: relative;
             height: 100%;
@@ -128,31 +144,6 @@
             height: 100%;
         }
         
-        .carousel-nav {
-            width: 48px;
-            height: 48px;
-            background: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transition: all 0.3s ease;
-        }
-        
-        .carousel-nav:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-        }
-        
-        .attraction-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            padding: 20px;
-        }
-        
         .attraction-card {
             background: white;
             border-radius: 20px;
@@ -199,32 +190,27 @@
             background: rgba(59, 130, 246, 0.5);
         }
         
-        .location-button {
-            background: white;
-            padding: 12px 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
+        .attractions-sidebar {
+            max-height: calc(100vh - 200px);
+            overflow-y: scroll !important;
         }
         
-        .location-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-            border-color: #3b82f6;
+        .attractions-sidebar::-webkit-scrollbar {
+            width: 10px;
         }
         
-        .location-button:active {
-            transform: translateY(0);
+        .attractions-sidebar::-webkit-scrollbar-track {
+            background: #dbeafe;
+            border-radius: 5px;
         }
         
-        .location-button i {
-            color: #3b82f6;
+        .attractions-sidebar::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 5px;
+        }
+        
+        .attractions-sidebar::-webkit-scrollbar-thumb:hover {
+            background: #2563eb;
         }
         
         .country-card {
@@ -265,58 +251,6 @@
             margin: 0;
         }
         
-        .info-window-content {
-            padding: 8px;
-            max-width: 280px;
-        }
-        
-        .info-window-content img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 8px;
-        }
-        
-        .info-window-content h3 {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            color: #1f2937;
-        }
-        
-        .info-window-content .rating {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 14px;
-            color: #f59e0b;
-            margin-bottom: 8px;
-        }
-        
-        .info-window-content p {
-            font-size: 13px;
-            color: #6b7280;
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-        
-        .info-window-content .view-details {
-            background: #10b981;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-block;
-            transition: background 0.2s;
-        }
-        
-        .info-window-content .view-details:hover {
-            background: #059669;
-        }
-        
         .place-detail-modal {
             position: fixed;
             top: 0;
@@ -337,7 +271,26 @@
             max-width: 800px;
             max-height: 90vh;
             overflow-y: auto;
+            overflow-x: hidden;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .place-detail-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .place-detail-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 0 24px 24px 0;
+        }
+        
+        .place-detail-content::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 4px;
+        }
+        
+        .place-detail-content::-webkit-scrollbar-thumb:hover {
+            background: #2563eb;
         }
         
         .place-detail-header {
@@ -345,52 +298,87 @@
             height: 350px;
             overflow: hidden;
             border-radius: 24px 24px 0 0;
+            background: #000;
         }
         
         .photo-carousel {
-            position: relative;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
+            overflow: hidden;
         }
         
         .carousel-images {
             display: flex;
-            transition: transform 0.4s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
             height: 100%;
+            transition: transform 0.4s ease-in-out;
         }
         
         .carousel-image {
-            min-width: 100%;
-            height: 100%;
+            width: 800px;
+            min-width: 800px;
+            max-width: 800px;
+            height: 350px;
             object-fit: cover;
+            flex-shrink: 0;
+            display: block;
         }
         
         .carousel-controls {
             position: absolute;
-            bottom: 20px;
+            bottom: 6px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 8px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 8px 16px;
-            border-radius: 20px;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px 16px;
+            border-radius: 16px;
             backdrop-filter: blur(10px);
+            z-index: 15;
         }
         
-        .carousel-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.5);
+        .carousel-thumbnail {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            object-fit: cover;
             cursor: pointer;
             transition: all 0.3s ease;
+            border: 3px solid transparent;
+            opacity: 0.6;
         }
         
-        .carousel-dot.active {
-            background: white;
-            width: 24px;
-            border-radius: 4px;
+        .carousel-thumbnail.active {
+            border-color: white;
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        
+        .carousel-thumbnail:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        
+        .photo-count {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .carousel-arrow {
@@ -422,10 +410,34 @@
             right: 20px;
         }
         
-        .place-detail-header img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        .favorite-button {
+            position: absolute;
+            top: 20px;
+            right: 80px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 20;
+        }
+        
+        .favorite-button:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+        
+        .favorite-button i {
+            color: #ef4444;
+            font-size: 18px;
+        }
+        
+        .favorite-button.active i {
+            font-weight: 900;
         }
         
         .close-modal {
@@ -441,6 +453,7 @@
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 20;
         }
         
         .place-detail-body {
@@ -483,9 +496,9 @@
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
+            border: 3px solid rgba(59, 130, 246, 0.3);
             border-radius: 50%;
-            border-top-color: white;
+            border-top-color: #3b82f6;
             animation: spin 1s ease-in-out infinite;
         }
         
@@ -661,7 +674,7 @@
         
         let currentMapStyle = 'blue';
 
-        // Featured destinations with Unsplash images - No duplicates with popular countries
+        // Featured destinations with Unsplash images
         const featuredDestinations = [
             { name: 'Iceland', image: 'https://images.unsplash.com/photo-1504893524553-b855bce32c67?w=800&q=80', rating: 4.8, description: 'Land of fire and ice' },
             { name: 'New Zealand', image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80', rating: 4.9, description: 'Adventure paradise' },
@@ -678,8 +691,6 @@
             const icons = document.querySelectorAll('.nav-icon');
             icons.forEach(icon => icon.classList.remove('active'));
             event.target.closest('.nav-icon').classList.add('active');
-            
-            const mainContent = document.getElementById('mainContent');
             
             switch(view) {
                 case 'discover':
@@ -712,25 +723,18 @@
                         <p class="text-gray-600">Your AI-powered travel companion for solo adventures</p>
                     </div>
                     
-                    <!-- Search Bar with Location Button -->
+                    <!-- Search Bar with Location Icon -->
                     <div class="glass-card p-4 mb-6">
-                        <div class="flex items-center gap-3 mb-3">
+                        <div class="flex items-center gap-3">
                             <i class="fas fa-search text-gray-400 text-lg"></i>
                             <input type="text" id="searchInput" placeholder="Search destinations, cities, or countries..." 
                                    class="search-input" onkeypress="handleSearch(event)">
+                            <i class="fas fa-location-crosshairs text-blue-600 text-xl location-icon" 
+                               onclick="useMyLocation()" 
+                               title="Use my current location"></i>
                             <button onclick="performSearch()" class="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-600 transition-all">
                                 Search
                             </button>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="location-button flex-1" onclick="useMyLocation()">
-                                <i class="fas fa-location-crosshairs text-emerald-600"></i>
-                                <span class="font-semibold text-gray-700">Use My Current Location</span>
-                            </div>
-                            <div class="text-xs text-gray-500 flex items-center gap-1">
-                                <i class="fas fa-info-circle"></i>
-                                <span>Or search manually above</span>
-                            </div>
                         </div>
                     </div>
                     
@@ -781,26 +785,17 @@
                 return;
             }
 
-            // Show loading state
-            const locationBtn = document.querySelector('.location-button');
-            const originalContent = locationBtn.innerHTML;
-            locationBtn.innerHTML = `
-                <div class="loading-spinner"></div>
-                <span class="font-semibold text-gray-700">Getting your location...</span>
-            `;
-            locationBtn.style.pointerEvents = 'none';
-
-            console.log('Requesting geolocation...');
+            const locationIcon = document.querySelector('.location-icon');
+            locationIcon.innerHTML = '<div class="loading-spinner" style="width: 16px; height: 16px; border-width: 2px;"></div>';
+            locationIcon.style.pointerEvents = 'none';
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    console.log('Location acquired:', position.coords);
                     userLocation = {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
                     };
                     
-                    // Switch to map view and show nearby attractions
                     const icons = document.querySelectorAll('.nav-icon');
                     icons.forEach((icon, index) => {
                         icon.classList.remove('active');
@@ -808,30 +803,26 @@
                     });
                     showMapView();
                     
-                    // Search nearby after map loads
                     setTimeout(() => {
                         searchNearbyAttractions(userLocation);
                     }, 500);
                 },
                 (error) => {
-                    console.error('Geolocation error:', error);
                     let errorMessage = 'Unable to get your location. ';
-                    
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
-                            errorMessage += 'Please allow location access in your browser settings.';
+                            errorMessage += 'Please allow location access.';
                             break;
                         case error.POSITION_UNAVAILABLE:
-                            errorMessage += 'Your location is currently unavailable. Please check your device settings.';
+                            errorMessage += 'Location unavailable.';
                             break;
                         case error.TIMEOUT:
-                            errorMessage += 'The request took too long. Please try again or search manually.';
+                            errorMessage += 'Request timed out.';
                             break;
                     }
-                    
                     alert(errorMessage);
-                    locationBtn.innerHTML = originalContent;
-                    locationBtn.style.pointerEvents = 'auto';
+                    locationIcon.innerHTML = '<i class="fas fa-location-crosshairs text-blue-600 text-xl"></i>';
+                    locationIcon.style.pointerEvents = 'auto';
                 },
                 {
                     enableHighAccuracy: false,
@@ -845,7 +836,6 @@
             if (map && mapStyles[styleName]) {
                 currentMapStyle = styleName;
                 map.setOptions({ styles: mapStyles[styleName] });
-                console.log('Map style changed to:', styleName);
             }
         }
 
@@ -860,7 +850,7 @@
                         </h1>
                     </div>
                     
-                    <div class="flex gap-6 flex-1">
+                    <div class="flex gap-6" style="height: calc(100vh - 160px);">
                         <!-- Map Section -->
                         <div class="flex-1 glass-card p-4">
                             <div class="mb-4 flex gap-3">
@@ -868,6 +858,9 @@
                                     <i class="fas fa-search text-gray-400 text-lg"></i>
                                     <input type="text" id="mapSearchInput" placeholder="Search location..." 
                                            class="search-input" onkeypress="handleMapSearch(event)">
+                                    <i class="fas fa-location-crosshairs text-blue-600 text-xl location-icon" 
+                                       onclick="useMyLocationMap()" 
+                                       title="Near me"></i>
                                 </div>
                                 <select onchange="changeMapStyle(this.value)" class="px-4 py-2 bg-white rounded-xl border-2 border-gray-200 font-semibold text-gray-700 cursor-pointer hover:border-blue-400 transition-colors">
                                     <option value="blue">🎨 Blue</option>
@@ -876,10 +869,6 @@
                                     <option value="retro">📻 Retro</option>
                                     <option value="vibrant">🌈 Vibrant</option>
                                 </select>
-                                <div class="location-button" onclick="useMyLocationMap()">
-                                    <i class="fas fa-location-crosshairs text-blue-600"></i>
-                                    <span class="font-semibold text-gray-700">Near Me</span>
-                                </div>
                             </div>
                             <div class="map-container h-[calc(100%-80px)]">
                                 <div id="map"></div>
@@ -887,17 +876,16 @@
                         </div>
                         
                         <!-- Attractions Sidebar -->
-                        <div class="w-96 glass-card p-6 overflow-y-auto">
+                        <div class="w-96 glass-card p-6 attractions-sidebar">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Nearby Attractions</h3>
                             <div id="attractionsList">
-                                <p class="text-gray-500 text-center py-8">Search for a location or use "Near Me" to see attractions</p>
+                                <p class="text-gray-500 text-center py-8">Search for a location or use location icon to see attractions</p>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
             
-            // Initialize map with error handling
             setTimeout(() => {
                 try {
                     const mapDiv = document.getElementById('map');
@@ -913,7 +901,6 @@
                     });
                     
                     placesService = new google.maps.places.PlacesService(map);
-                    console.log('Map and Places service initialized successfully');
                 } catch (error) {
                     console.error('Error initializing map:', error);
                     alert('Failed to load map. Please refresh the page.');
@@ -927,50 +914,40 @@
                 return;
             }
 
-            const locationBtn = document.querySelector('.location-button');
-            const originalContent = locationBtn.innerHTML;
-            locationBtn.innerHTML = `
-                <div class="loading-spinner"></div>
-                <span class="font-semibold text-gray-700">Locating...</span>
-            `;
-            locationBtn.style.pointerEvents = 'none';
-
-            console.log('Requesting geolocation from map view...');
+            const locationIcon = document.querySelector('.location-icon');
+            const originalContent = locationIcon.innerHTML;
+            locationIcon.innerHTML = '<div class="loading-spinner" style="width: 16px; height: 16px; border-width: 2px;"></div>';
+            locationIcon.style.pointerEvents = 'none';
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    console.log('Location acquired:', position.coords);
                     userLocation = {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
                     };
                     searchNearbyAttractions(userLocation);
                     
-                    // Reset button
                     setTimeout(() => {
-                        locationBtn.innerHTML = originalContent;
-                        locationBtn.style.pointerEvents = 'auto';
+                        locationIcon.innerHTML = originalContent;
+                        locationIcon.style.pointerEvents = 'auto';
                     }, 1000);
                 },
                 (error) => {
-                    console.error('Geolocation error:', error);
                     let errorMessage = 'Unable to get your location. ';
-                    
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
-                            errorMessage += 'Please allow location access in your browser settings.';
+                            errorMessage += 'Please allow location access.';
                             break;
                         case error.POSITION_UNAVAILABLE:
-                            errorMessage += 'Location information unavailable.';
+                            errorMessage += 'Location unavailable.';
                             break;
                         case error.TIMEOUT:
-                            errorMessage += 'Request timed out. Try searching manually instead.';
+                            errorMessage += 'Request timed out.';
                             break;
                     }
-                    
                     alert(errorMessage);
-                    locationBtn.innerHTML = originalContent;
-                    locationBtn.style.pointerEvents = 'auto';
+                    locationIcon.innerHTML = originalContent;
+                    locationIcon.style.pointerEvents = 'auto';
                 },
                 {
                     enableHighAccuracy: false,
@@ -982,14 +959,10 @@
 
         function searchNearbyAttractions(location) {
             if (!placesService) {
-                console.error('Places service not initialized');
                 alert('Map service is not ready. Please wait a moment and try again.');
                 return;
             }
 
-            console.log('Searching for attractions near:', location);
-            
-            // Show loading in attractions list
             const attractionsList = document.getElementById('attractionsList');
             if (attractionsList) {
                 attractionsList.innerHTML = `
@@ -1007,13 +980,10 @@
             };
 
             placesService.nearbySearch(request, (results, status) => {
-                console.log('Places API response:', status, 'Results:', results?.length);
-                
                 if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
                     map.setCenter(new google.maps.LatLng(location.lat, location.lng));
                     map.setZoom(13);
                     
-                    // Add user location marker (blue circle)
                     clearMarkers();
                     new google.maps.Marker({
                         position: location,
@@ -1032,7 +1002,6 @@
                     
                     displayAttractions(results.slice(0, 20));
                 } else {
-                    console.error('No results found or API error:', status);
                     if (attractionsList) {
                         attractionsList.innerHTML = `
                             <div class="text-center py-8">
@@ -1091,7 +1060,10 @@
             mainContent.innerHTML = `
                 <div class="h-full flex flex-col">
                     <div class="glass-card p-8">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
+                        <div class="mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">Settings</h2>
+                            <p class="text-sm text-gray-500 mt-1">Manage your <span class="font-semibold text-blue-600">TrAilvay</span> preferences</p>
+                        </div>
                         <div class="space-y-4">
                             <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                                 <div>
@@ -1117,13 +1089,18 @@
                                 </div>
                                 <i class="fas fa-chevron-right text-gray-400"></i>
                             </div>
+                            <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+                                <p class="text-sm text-gray-500">
+                                    <span class="font-bold text-blue-600">TrAilvay</span> v1.0.0
+                                </p>
+                                <p class="text-xs text-gray-400 mt-1">Your AI-powered travel companion</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        // Popular countries with Unsplash images
         const popularCountries = [
             { name: 'France', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80', description: 'Paris' },
             { name: 'Italy', image: 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&q=80', description: 'Rome' },
@@ -1153,7 +1130,6 @@
         }
 
         function searchDestination(destination) {
-            // Switch to map view and show results
             const icons = document.querySelectorAll('.nav-icon');
             icons.forEach((icon, index) => {
                 icon.classList.remove('active');
@@ -1197,7 +1173,6 @@
                     ? place.photos[0].getUrl({maxWidth: 400})
                     : 'https://via.placeholder.com/400x300?text=No+Image';
                 
-                // Create marker for each place
                 const marker = new google.maps.Marker({
                     position: place.geometry.location,
                     map: map,
@@ -1218,7 +1193,6 @@
                     }
                 });
                 
-                // Add click listener to marker
                 marker.addListener('click', () => {
                     showPlaceDetails(place.place_id);
                 });
@@ -1281,7 +1255,7 @@
                 <div class="place-detail-content">
                     <div class="place-detail-header">
                         <div class="photo-carousel">
-                            <div class="carousel-images" id="carouselImages">
+                            <div class="carousel-images" id="carouselImages" style="width: ${photos.length * 800}px;">
                                 ${photos.map(photo => `
                                     <img src="${photo}" alt="${place.name}" class="carousel-image">
                                 `).join('')}
@@ -1294,11 +1268,18 @@
                                     <i class="fas fa-chevron-right text-gray-700"></i>
                                 </div>
                                 <div class="carousel-controls">
-                                    ${photos.map((_, index) => `
-                                        <div class="carousel-dot ${index === 0 ? 'active' : ''}" onclick="goToSlide(${index})"></div>
+                                    ${photos.map((photo, index) => `
+                                        <img src="${photo}" alt="Thumbnail ${index + 1}" class="carousel-thumbnail ${index === 0 ? 'active' : ''}" onclick="goToSlide(${index})">
                                     `).join('')}
                                 </div>
+                                <div class="photo-count">
+                                    <i class="fas fa-images mr-2"></i>
+                                    <span id="currentPhoto">1</span> / ${photos.length}
+                                </div>
                             ` : ''}
+                        </div>
+                        <div class="favorite-button" onclick="toggleFavorite(this)" title="Add to favorites">
+                            <i class="far fa-heart"></i>
                         </div>
                         <div class="close-modal" onclick="this.closest('.place-detail-modal').remove()">
                             <i class="fas fa-times text-gray-600"></i>
@@ -1382,9 +1363,20 @@
             
             document.body.appendChild(modal);
             
-            // Initialize carousel state
             window.currentSlide = 0;
             window.totalSlides = photos.length;
+        }
+        
+        function toggleFavorite(button) {
+            button.classList.toggle('active');
+            const icon = button.querySelector('i');
+            if (button.classList.contains('active')) {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+            }
         }
         
         function moveCarousel(direction) {
@@ -1401,22 +1393,27 @@
         
         function updateCarousel() {
             const carouselImages = document.getElementById('carouselImages');
-            const dots = document.querySelectorAll('.carousel-dot');
+            const thumbnails = document.querySelectorAll('.carousel-thumbnail');
+            const photoCount = document.getElementById('currentPhoto');
             
             if (carouselImages) {
-                carouselImages.style.transform = `translateX(-${window.currentSlide * 100}%)`;
+                const offset = window.currentSlide * 800;
+                carouselImages.style.transform = `translateX(-${offset}px)`;
             }
             
-            dots.forEach((dot, index) => {
+            thumbnails.forEach((thumbnail, index) => {
                 if (index === window.currentSlide) {
-                    dot.classList.add('active');
+                    thumbnail.classList.add('active');
                 } else {
-                    dot.classList.remove('active');
+                    thumbnail.classList.remove('active');
                 }
             });
+            
+            if (photoCount) {
+                photoCount.textContent = window.currentSlide + 1;
+            }
         }
 
-        // Initialize
         window.addEventListener('DOMContentLoaded', () => {
             showDiscoverView();
         });
