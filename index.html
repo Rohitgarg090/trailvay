@@ -3,859 +3,1423 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>trAilvay - Intelligent Discovery for Solo Travelers</title>
+    <title>TrAilvay - Modern Travel Discovery</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrGAI7dpzysJuVdSSCAkkE5Irkh5_-cRQ&libraries=places"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #059669 0%, #10b981 50%, #f59e0b 100%); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #dbeafe 100%);
+        }
+        
+        .sidebar {
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+            box-shadow: 4px 0 20px rgba(30, 58, 138, 0.15);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .nav-icon:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(4px);
+        }
+        
+        .nav-icon.active {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .search-input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 100%;
+            font-size: 15px;
+            color: #1f2937;
+        }
+        
+        .search-input::placeholder {
+            color: #9ca3af;
+        }
+        
+        .destination-card {
+            position: relative;
+            height: 100%;
+            border-radius: 24px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .destination-card:hover {
+            transform: scale(1.02);
+        }
+        
+        .destination-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+            padding: 24px;
+            color: white;
+        }
+        
+        .rating-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(59, 130, 246, 0.95);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: 2px solid white;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .user-avatar:hover {
+            transform: scale(1.1);
+        }
+        
+        .map-container {
+            border-radius: 24px;
+            overflow: hidden;
+            height: 100%;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .carousel-nav {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .carousel-nav:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+        
+        .attraction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .attraction-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .attraction-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        
+        .attraction-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        
+        .attraction-info {
+            padding: 16px;
+        }
+        
+        .scrollable-content {
+            height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+        
+        .scrollable-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .scrollable-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .scrollable-content::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.3);
+            border-radius: 3px;
+        }
+        
+        .scrollable-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.5);
+        }
+        
+        .location-button {
+            background: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .location-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+            border-color: #3b82f6;
+        }
+        
+        .location-button:active {
+            transform: translateY(0);
+        }
+        
+        .location-button i {
+            color: #3b82f6;
+        }
+        
+        .country-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            height: 200px;
+        }
+        
+        .country-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+        }
+        
+        .country-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .country-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(30, 58, 138, 0.9) 0%, transparent 100%);
+            padding: 20px;
+            color: white;
+        }
+        
+        .country-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .info-window-content {
+            padding: 8px;
+            max-width: 280px;
+        }
+        
+        .info-window-content img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .info-window-content h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #1f2937;
+        }
+        
+        .info-window-content .rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            color: #f59e0b;
+            margin-bottom: 8px;
+        }
+        
+        .info-window-content p {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .info-window-content .view-details {
+            background: #10b981;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        
+        .info-window-content .view-details:hover {
+            background: #059669;
+        }
+        
+        .place-detail-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        
+        .place-detail-content {
+            background: white;
+            border-radius: 24px;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .place-detail-header {
+            position: relative;
+            height: 350px;
+            overflow: hidden;
+            border-radius: 24px 24px 0 0;
+        }
+        
+        .photo-carousel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .carousel-images {
+            display: flex;
+            transition: transform 0.4s ease-in-out;
+            height: 100%;
+        }
+        
+        .carousel-image {
+            min-width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .carousel-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .carousel-dot.active {
+            background: white;
+            width: 24px;
+            border-radius: 4px;
+        }
+        
+        .carousel-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .carousel-arrow:hover {
+            background: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .carousel-arrow.left {
+            left: 20px;
+        }
+        
+        .carousel-arrow.right {
+            right: 20px;
+        }
+        
+        .place-detail-header img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .place-detail-body {
+            padding: 32px;
+        }
+        
+        .detail-section {
+            margin-bottom: 24px;
+        }
+        
+        .detail-section h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+        
+        .detail-section p {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+        
+        .detail-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .detail-tag {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
         
         @keyframes spin {
-            from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
         
-        /* Image Carousel Styles */
-        .image-carousel { position: relative; width: 100%; height: 100%; }
-        .carousel-images { display: flex; transition: transform 0.3s ease; height: 100%; }
-        .carousel-image { min-width: 100%; height: 100%; object-fit: cover; }
-        .carousel-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; z-index: 10; }
-        .carousel-nav:hover { background: rgba(0,0,0,0.7); }
-        .carousel-prev { left: 8px; }
-        .carousel-next { right: 8px; }
-        .carousel-dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 10; }
-        .carousel-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); cursor: pointer; }
-        .carousel-dot.active { background: white; }
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
         
-        /* Expandable Card Styles */
-        .place-card { transition: all 0.3s ease; }
-        .place-card:hover { transform: translateY(-4px); }
-        .place-info { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
-        .place-card:hover .place-info { max-height: 200px; }
-        .place-card:hover .quick-info { display: none; }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
     </style>
 </head>
-<body class="bg-gray-50">
-    <nav class="bg-white shadow-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center cursor-pointer" onclick="showPage('home')">
-                    <svg class="h-8 w-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span class="ml-2 text-2xl font-bold text-gray-800">
-                        Tr<span class="text-amber-500">AI</span>lVay
-                    </span>
-                </div>
-                
-                <div class="hidden md:flex items-center space-x-8">
-                    <a onclick="showPage('home')" class="text-gray-700 hover:text-emerald-600 font-medium cursor-pointer">Home</a>
-                    <a onclick="showPage('cities')" class="text-gray-700 hover:text-emerald-600 font-medium cursor-pointer">Cities</a>
-                    <button class="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white px-6 py-2 rounded-full font-semibold hover:from-emerald-700 hover:to-emerald-600">
-                        Download App
-                    </button>
-                </div>
-
-                <button onclick="toggleMobileMenu()" class="md:hidden">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                    </svg>
-                </button>
+<body>
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="sidebar w-24 flex flex-col items-center py-8 space-y-6">
+            <!-- Logo -->
+            <div class="text-white text-center mb-4">
+                <svg class="h-10 w-10 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <div class="text-xs font-bold tracking-wider">TrAilvay</div>
+            </div>
+            
+            <!-- Navigation Icons -->
+            <div class="nav-icon active" onclick="showView('discover')" title="Discover">
+                <i class="fas fa-compass text-white text-xl"></i>
+            </div>
+            
+            <div class="nav-icon" onclick="showView('map')" title="Map">
+                <i class="fas fa-map text-white text-xl"></i>
+            </div>
+            
+            <div class="nav-icon" onclick="showView('favorites')" title="Favorites">
+                <i class="fas fa-heart text-white text-xl"></i>
+            </div>
+            
+            <div class="nav-icon" onclick="showView('trips')" title="Trips">
+                <i class="fas fa-suitcase text-white text-xl"></i>
+            </div>
+            
+            <div class="flex-1"></div>
+            
+            <!-- Add Button -->
+            <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg">
+                <i class="fas fa-plus text-blue-700 text-xl"></i>
+            </div>
+            
+            <!-- Settings -->
+            <div class="nav-icon" onclick="showView('settings')" title="Settings">
+                <i class="fas fa-cog text-white text-xl"></i>
+            </div>
+            
+            <!-- User Avatar -->
+            <div class="user-avatar bg-white">
+                <img src="https://ui-avatars.com/api/?name=You&background=3b82f6&color=fff" alt="User" class="w-full h-full object-cover rounded-xl">
             </div>
         </div>
-
-        <div id="mobileMenu" class="md:hidden bg-white border-t hidden">
-            <div class="px-4 py-3 space-y-3">
-                <a onclick="showPage('home'); toggleMobileMenu();" class="block text-gray-700 hover:text-emerald-600 font-medium cursor-pointer">Home</a>
-                <a onclick="showPage('cities'); toggleMobileMenu();" class="block text-gray-700 hover:text-emerald-600 font-medium cursor-pointer">Cities</a>
-            </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1 p-6">
+            <div id="mainContent" class="h-full"></div>
         </div>
-    </nav>
-
-    <div id="content"></div>
-
-    <footer class="bg-gray-900 text-white py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <p class="text-gray-400 text-sm">© 2025 TrAilVay. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
+    </div>
 
     <script>
-        let map, markers = [], placesService, infoWindow, autocomplete;
-        let carouselIndices = {};
-        let currentPage = 1, itemsPerPage = 9;
-        let allAttractions = [], allHotels = [];
+        let map, placesService;
+        let currentView = 'discover';
+        let markers = [];
         let userLocation = null;
         const GOOGLE_API_KEY = 'AIzaSyBrGAI7dpzysJuVdSSCAkkE5Irkh5_-cRQ';
 
-        const cities = [
-            { name: 'London', country: 'United Kingdom', flag: '🇬🇧', attractions: 47, lat: 51.5074, lng: -0.1278 },
-            { name: 'Paris', country: 'France', flag: '🇫🇷', attractions: 52, lat: 48.8566, lng: 2.3522 },
-            { name: 'Tokyo', country: 'Japan', flag: '🇯🇵', attractions: 63, lat: 35.6762, lng: 139.6503 },
-            { name: 'New York', country: 'USA', flag: '🇺🇸', attractions: 71, lat: 40.7128, lng: -74.0060 }
+        // Map styles for different themes
+        const mapStyles = {
+            blue: [
+                {
+                    featureType: 'water',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#bfdbfe' }]
+                },
+                {
+                    featureType: 'landscape',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#f0f9ff' }]
+                },
+                {
+                    featureType: 'road',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#ffffff' }]
+                }
+            ],
+            minimal: [
+                {
+                    featureType: 'all',
+                    elementType: 'labels.text.fill',
+                    stylers: [{ color: '#7c7c7c' }]
+                },
+                {
+                    featureType: 'water',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#e9e9e9' }]
+                },
+                {
+                    featureType: 'landscape',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#f5f5f5' }]
+                }
+            ],
+            dark: [
+                {
+                    elementType: 'geometry',
+                    stylers: [{ color: '#212121' }]
+                },
+                {
+                    elementType: 'labels.text.fill',
+                    stylers: [{ color: '#757575' }]
+                },
+                {
+                    featureType: 'water',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#000000' }]
+                },
+                {
+                    featureType: 'road',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#2c2c2c' }]
+                }
+            ],
+            retro: [
+                {
+                    elementType: 'geometry',
+                    stylers: [{ color: '#ebe3cd' }]
+                },
+                {
+                    featureType: 'water',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#c9c9c9' }]
+                },
+                {
+                    featureType: 'road',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#ffffff' }]
+                }
+            ],
+            vibrant: [
+                {
+                    featureType: 'water',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#00CED1' }]
+                },
+                {
+                    featureType: 'landscape',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#FFE4B5' }]
+                },
+                {
+                    featureType: 'road',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#ffffff' }]
+                },
+                {
+                    featureType: 'poi.park',
+                    elementType: 'geometry',
+                    stylers: [{ color: '#90EE90' }]
+                }
+            ]
+        };
+        
+        let currentMapStyle = 'blue';
+
+        // Featured destinations with Unsplash images - No duplicates with popular countries
+        const featuredDestinations = [
+            { name: 'Iceland', image: 'https://images.unsplash.com/photo-1504893524553-b855bce32c67?w=800&q=80', rating: 4.8, description: 'Land of fire and ice' },
+            { name: 'New Zealand', image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80', rating: 4.9, description: 'Adventure paradise' },
+            { name: 'Norway', image: 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=800&q=80', rating: 4.8, description: 'Fjords and northern lights' },
+            { name: 'Canada', image: 'https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=800&q=80', rating: 4.7, description: 'Natural wonders' },
+            { name: 'Australia', image: 'https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?w=800&q=80', rating: 4.8, description: 'Down under beauty' },
+            { name: 'Thailand', image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=800&q=80', rating: 4.7, description: 'Tropical paradise' },
+            { name: 'Dubai', image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&q=80', rating: 4.8, description: 'Modern marvel' },
+            { name: 'Maldives', image: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=800&q=80', rating: 4.9, description: 'Island paradise' }
         ];
 
-        function getUserLocation() {
-            return new Promise((resolve, reject) => {
-                if (!navigator.geolocation) {
-                    reject('Geolocation not supported');
-                    return;
-                }
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
-                        console.log('User location:', userLocation);
-                        resolve(userLocation);
-                    },
-                    (error) => {
-                        console.warn('Location access denied:', error);
-                        reject(error);
-                    }
-                );
-            });
-        }
-
-        function calculateDistance(lat1, lng1, lat2, lng2) {
-            const R = 6371;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLng = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                     Math.sin(dLng/2) * Math.sin(dLng/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-
-        function getPlacePhotoUrl(photoReference, maxWidth = 600) {
-            if (!photoReference) return null;
-            return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photoreference=${photoReference}&key=${GOOGLE_API_KEY}`;
-        }
-
-        function getPlaceDetails(placeId) {
-            return new Promise((resolve) => {
-                if (!placesService) {
-                    resolve(null);
-                    return;
-                }
-                const request = {
-                    placeId: placeId,
-                    fields: ['name', 'rating', 'user_ratings_total', 'photos', 'formatted_address', 
-                             'website', 'types', 'editorial_summary', 'reviews', 'vicinity']
-                };
-                placesService.getDetails(request, (place, status) => {
-                    if (status === google.maps.places.PlacesServiceStatus.OK) {
-                        resolve(place);
-                    } else {
-                        resolve(null);
-                    }
-                });
-            });
-        }
-
-        function searchNearbyPlaces(location, keyword, radius) {
-            return new Promise((resolve) => {
-                if (!placesService) {
-                    console.error('Places service not available');
-                    resolve([]);
-                    return;
-                }
-                
-                const request = { location: location, radius: radius, keyword: keyword };
-                console.log('Places API request:', request);
-                
-                // Add timeout protection
-                const timeout = setTimeout(() => {
-                    console.error('Places search timed out after 10 seconds');
-                    resolve([]);
-                }, 10000);
-                
-                placesService.nearbySearch(request, (results, status) => {
-                    clearTimeout(timeout);
-                    console.log('Places API response - Status:', status, 'Results:', results?.length || 0);
-                    
-                    if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                        resolve(results);
-                    } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-                        console.warn('No results found for:', keyword);
-                        resolve([]);
-                    } else {
-                        console.error('Places API error:', status);
-                        resolve([]);
-                    }
-                });
-            });
-        }
-
-        function searchByText(query, location) {
-            return new Promise((resolve) => {
-                if (!placesService) {
-                    console.error('Places service not available');
-                    resolve([]);
-                    return;
-                }
-                
-                // Build request - only include location/radius if location is provided
-                const request = { query: query };
-                if (location) {
-                    request.location = location;
-                    request.radius = 10000;
-                }
-                
-                console.log('Text search request:', request);
-                
-                const timeout = setTimeout(() => {
-                    console.error('Text search timed out after 10 seconds');
-                    resolve([]);
-                }, 10000);
-                
-                placesService.textSearch(request, (results, status) => {
-                    clearTimeout(timeout);
-                    console.log('Text search response - Status:', status, 'Results:', results?.length || 0);
-                    
-                    if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                        resolve(results);
-                    } else {
-                        console.error('Text search error:', status);
-                        resolve([]);
-                    }
-                });
-            });
-        }
-
-        function createImageCarousel(photos, placeName, cardId) {
-            if (!photos || photos.length === 0) {
-                return `
-                    <div class="h-64 bg-gray-200 flex items-center justify-center">
-                        <div class="text-gray-500 text-center p-4">
-                            <p class="text-4xl mb-2">📍</p>
-                            <p class="text-sm">No photos available</p>
-                        </div>
-                    </div>
-                `;
-            }
-
-            const photoUrls = photos.slice(0, 5).map(photo => {
-                const photoRef = photo.photo_reference || photo.getUrl;
-                if (photoRef) {
-                    return typeof photoRef === 'function' 
-                        ? photo.getUrl({maxWidth: 800}) 
-                        : getPlacePhotoUrl(photoRef, 800);
-                }
-                return null;
-            }).filter(url => url !== null);
-
-            if (photoUrls.length === 0) {
-                return `
-                    <div class="h-64 bg-gray-200 flex items-center justify-center">
-                        <div class="text-gray-500 text-center p-4">
-                            <p class="text-4xl mb-2">📍</p>
-                            <p class="text-sm">No photos available</p>
-                        </div>
-                    </div>
-                `;
-            }
-
-            return `
-                <div class="h-64 relative image-carousel" id="carousel-${cardId}">
-                    <div class="carousel-images h-full">
-                        ${photoUrls.map((url, index) => `
-                            <img src="${url}" 
-                                 alt="${placeName} - Image ${index + 1}" 
-                                 class="carousel-image ${index === 0 ? 'active' : ''}"
-                                 onerror="this.style.display='none';">
-                        `).join('')}
-                    </div>
-                    ${photoUrls.length > 1 ? `
-                        <button class="carousel-nav carousel-prev" onclick="moveCarousel('${cardId}', -1)">‹</button>
-                        <button class="carousel-nav carousel-next" onclick="moveCarousel('${cardId}', 1)">›</button>
-                        <div class="carousel-dots">
-                            ${photoUrls.map((_, index) => `
-                                <div class="carousel-dot ${index === 0 ? 'active' : ''}" onclick="goToSlide('${cardId}', ${index})"></div>
-                            `).join('')}
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }
-
-        function moveCarousel(cardId, direction) {
-            const carousel = document.getElementById(`carousel-${cardId}`);
-            if (!carousel) return;
-            const images = carousel.querySelectorAll('.carousel-image');
-            const dots = carousel.querySelectorAll('.carousel-dot');
-            if (!carouselIndices[cardId]) carouselIndices[cardId] = 0;
-            let currentIndex = carouselIndices[cardId];
-            currentIndex = (currentIndex + direction + images.length) % images.length;
-            carouselIndices[cardId] = currentIndex;
-            const imagesContainer = carousel.querySelector('.carousel-images');
-            imagesContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
-            dots.forEach((dot, index) => {
-                dot.classList.toggle('active', index === currentIndex);
-            });
-        }
-
-        function goToSlide(cardId, index) {
-            const carousel = document.getElementById(`carousel-${cardId}`);
-            if (!carousel) return;
-            const dots = carousel.querySelectorAll('.carousel-dot');
-            carouselIndices[cardId] = index;
-            const imagesContainer = carousel.querySelector('.carousel-images');
-            imagesContainer.style.transform = `translateX(-${index * 100}%)`;
-            dots.forEach((dot, i) => {
-                dot.classList.toggle('active', i === index);
-            });
-        }
-
-        function getPlaceTypeDescription(types) {
-            if (!types || types.length === 0) return '';
-            const typeMap = {
-                'tourist_attraction': 'Tourist Attraction', 'museum': 'Museum', 'park': 'Park',
-                'art_gallery': 'Art Gallery', 'church': 'Church', 'shopping_mall': 'Shopping Mall',
-                'restaurant': 'Restaurant', 'cafe': 'Café', 'bar': 'Bar', 'lodging': 'Hotel',
-                'hotel': 'Hotel', 'spa': 'Spa', 'gym': 'Gym'
-            };
-            const relevantTypes = types.filter(type => typeMap[type]).map(type => typeMap[type]).slice(0, 3);
-            return relevantTypes.join(' • ') || 'Place of Interest';
-        }
-
-        function loadMoreAttractions() {
-            const container = document.getElementById('attractionsContainer');
-            const loadMoreBtn = document.getElementById('loadMoreAttractions');
-            const start = currentPage * itemsPerPage;
-            const end = start + itemsPerPage;
-            const pagePlaces = allAttractions.slice(start, end);
+        function showView(view) {
+            currentView = view;
+            const icons = document.querySelectorAll('.nav-icon');
+            icons.forEach(icon => icon.classList.remove('active'));
+            event.target.closest('.nav-icon').classList.add('active');
             
-            pagePlaces.forEach((place, index) => {
-                if (!place) return;
-                const cardId = `attraction-${start + index}`;
-                const types = getPlaceTypeDescription(place.types);
-                const summary = place.editorial_summary?.overview || '';
-                const distance = userLocation && place.geometry 
-                    ? calculateDistance(userLocation.lat, userLocation.lng, 
-                                       place.geometry.location.lat(), 
-                                       place.geometry.location.lng()).toFixed(1)
-                    : null;
-                
-                const card = document.createElement('div');
-                card.className = 'place-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all';
-                card.innerHTML = `
-                    ${createImageCarousel(place.photos, place.name, cardId)}
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">${place.name}</h3>
-                        <p class="text-sm text-emerald-600 mb-2">${types}</p>
-                        ${place.rating ? `
-                            <div class="flex items-center mb-2">
-                                <span class="text-amber-500 font-bold text-lg mr-2">★ ${place.rating.toFixed(1)}</span>
-                                <span class="text-gray-600 text-sm">(${place.user_ratings_total || 0} reviews)</span>
-                                ${distance ? `<span class="text-gray-500 text-xs ml-auto">📍 ${distance} km away</span>` : ''}
-                            </div>
-                        ` : ''}
-                        ${place.aiScore ? `
-                            <div class="bg-purple-50 border border-purple-200 rounded-lg px-3 py-1 mb-2">
-                                <span class="text-purple-700 text-xs font-semibold">✨ AI Score: ${place.aiScore.toFixed(1)}</span>
-                            </div>
-                        ` : ''}
-                        <div class="quick-info">
-                            <p class="text-gray-600 text-sm line-clamp-2">${place.formatted_address || place.vicinity || ''}</p>
-                        </div>
-                        <div class="place-info mt-3 pt-3 border-t border-gray-100">
-                            ${summary ? `<p class="text-gray-700 text-sm mb-3">${summary}</p>` : ''}
-                            <p class="text-gray-600 text-sm mb-2">${place.formatted_address || ''}</p>
-                            ${place.website ? `<a href="${place.website}" target="_blank" class="text-emerald-600 text-sm hover:underline">Visit Website →</a>` : ''}
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
+            const mainContent = document.getElementById('mainContent');
             
-            currentPage++;
-            if (end >= allAttractions.length) {
-                loadMoreBtn.style.display = 'none';
+            switch(view) {
+                case 'discover':
+                    showDiscoverView();
+                    break;
+                case 'map':
+                    showMapView();
+                    break;
+                case 'favorites':
+                    showFavoritesView();
+                    break;
+                case 'trips':
+                    showTripsView();
+                    break;
+                case 'settings':
+                    showSettingsView();
+                    break;
             }
         }
 
-        function toggleMobileMenu() {
-            document.getElementById('mobileMenu').classList.toggle('hidden');
-        }
-
-        function showPage(page) {
-            const content = document.getElementById('content');
-            window.scrollTo(0, 0);
-            if (page === 'home') {
-                content.innerHTML = `
-                    <div class="gradient-bg text-white">
-                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
-                            <div class="text-center">
-                                <h1 class="text-4xl md:text-6xl font-bold mb-6">Intelligent Discovery for Solo Travelers</h1>
-                                <p class="text-xl md:text-2xl mb-8 text-emerald-50">AI-powered guidance for your next adventure</p>
-                            </div>
-                        </div>
+        function showDiscoverView() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="h-full flex flex-col">
+                    <!-- Header with Branding -->
+                    <div class="mb-6">
+                        <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                            Discover with <span class="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">TrAilvay</span>
+                        </h1>
+                        <p class="text-gray-600">Your AI-powered travel companion for solo adventures</p>
                     </div>
-                    <div class="bg-white shadow-lg -mt-8 mx-4 md:mx-auto max-w-4xl rounded-2xl p-6 relative z-10">
-                        <div class="flex flex-col md:flex-row gap-4">
-                            <input id="mapSearchInput" type="text" placeholder="Search for a city like Dubai, London..." 
-                                   class="flex-1 pl-4 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none"/>
-                            <button onclick="searchLocation()" class="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-emerald-700">
+                    
+                    <!-- Search Bar with Location Button -->
+                    <div class="glass-card p-4 mb-6">
+                        <div class="flex items-center gap-3 mb-3">
+                            <i class="fas fa-search text-gray-400 text-lg"></i>
+                            <input type="text" id="searchInput" placeholder="Search destinations, cities, or countries..." 
+                                   class="search-input" onkeypress="handleSearch(event)">
+                            <button onclick="performSearch()" class="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-600 transition-all">
                                 Search
                             </button>
                         </div>
+                        <div class="flex items-center gap-3">
+                            <div class="location-button flex-1" onclick="useMyLocation()">
+                                <i class="fas fa-location-crosshairs text-emerald-600"></i>
+                                <span class="font-semibold text-gray-700">Use My Current Location</span>
+                            </div>
+                            <div class="text-xs text-gray-500 flex items-center gap-1">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Or search manually above</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                        <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Popular Cities</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            ${cities.map(city => `
-                                <div onclick="showCityGuide('${city.name}')" class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
-                                    <div class="p-6">
-                                        <div class="text-4xl mb-2">${city.flag}</div>
-                                        <h3 class="text-xl font-bold text-gray-800 mb-1">${city.name}</h3>
-                                        <p class="text-gray-600 mb-3">${city.country}</p>
-                                        <p class="text-sm text-gray-500">${city.attractions} attractions</p>
+                    
+                    <div class="scrollable-content">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4 px-2">Featured Destinations</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            ${featuredDestinations.map(dest => `
+                                <div class="destination-card" onclick="searchDestination('${dest.name}')">
+                                    <img src="${dest.image}" 
+                                         alt="${dest.name}" 
+                                         class="w-full h-64 object-cover"
+                                         onerror="this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80'">
+                                    <div class="rating-badge">
+                                        <i class="fas fa-star"></i>
+                                        ${dest.rating}
+                                    </div>
+                                    <div class="destination-overlay">
+                                        <h3 class="text-xl font-bold mb-1">${dest.name}</h3>
+                                        <p class="text-sm opacity-90">${dest.description}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <!-- Popular Countries -->
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4 px-2">Popular Destinations</h2>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            ${popularCountries.map(country => `
+                                <div onclick="searchDestination('${country.name}')" class="country-card">
+                                    <img src="${country.image}" 
+                                         alt="${country.name}" 
+                                         onerror="this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80'">
+                                    <div class="country-overlay">
+                                        <h3 class="country-name">${country.name}</h3>
+                                        <p class="text-sm opacity-90">${country.description}</p>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
-                `;
-                
-                // Initialize autocomplete after the input is rendered
-                setTimeout(() => {
-                    const input = document.getElementById('mapSearchInput');
-                    if (input && google.maps.places && !autocomplete) {
-                        autocomplete = new google.maps.places.Autocomplete(input, {
-                            types: ['(cities)']
-                        });
-                        console.log('Autocomplete initialized');
-                    }
-                }, 100);
-            } else if (page === 'cities') {
-                content.innerHTML = `
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4 text-center">Explore Cities</h1>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            ${cities.map(city => `
-                                <div onclick="showCityGuide('${city.name}')" class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
-                                    <div class="p-6">
-                                        <div class="text-4xl mb-2">${city.flag}</div>
-                                        <h3 class="text-xl font-bold text-gray-800 mb-1">${city.name}</h3>
-                                        <p class="text-gray-600 mb-3">${city.country}</p>
-                                        <p class="text-sm text-gray-500">${city.attractions} attractions</p>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
+                </div>
+            `;
         }
 
-        async function searchLocation() {
-            const input = document.getElementById('mapSearchInput').value.trim();
-            if (!input) {
-                alert('Please enter a location');
+        function useMyLocation() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser');
                 return;
             }
-            
-            console.log('Searching for:', input);
-            
-            const city = cities.find(c => c.name.toLowerCase() === input.toLowerCase());
-            if (city) {
-                showCityGuide(city.name);
-            } else {
-                searchDynamicCity(input);
-            }
-        }
 
-        async function searchDynamicCity(locationName) {
-            const content = document.getElementById('content');
-            content.innerHTML = `
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-                    <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-600" style="animation: spin 1s linear infinite;"></div>
-                    <p class="mt-4 text-xl text-gray-600">Searching for ${locationName}...</p>
-                    <p class="text-sm text-gray-500 mt-2">This should take less than 30 seconds</p>
-                </div>
+            // Show loading state
+            const locationBtn = document.querySelector('.location-button');
+            const originalContent = locationBtn.innerHTML;
+            locationBtn.innerHTML = `
+                <div class="loading-spinner"></div>
+                <span class="font-semibold text-gray-700">Getting your location...</span>
             `;
-            window.scrollTo(0, 0);
+            locationBtn.style.pointerEvents = 'none';
 
-            // Overall timeout of 30 seconds
-            const overallTimeout = setTimeout(() => {
-                console.error('Search operation timed out after 30 seconds');
-                content.innerHTML = `
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-                        <p class="text-xl text-red-600">Search timed out</p>
-                        <p class="text-gray-500 mt-2">The Google Maps API is taking too long to respond. This might be due to:</p>
-                        <ul class="text-gray-600 mt-4 text-left max-w-md mx-auto">
-                            <li>• API quota limits</li>
-                            <li>• Network connection issues</li>
-                            <li>• Too many requests</li>
-                        </ul>
-                        <button onclick="showPage('home')" class="mt-6 bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700">← Back to Home</button>
-                    </div>
-                `;
-            }, 30000);
+            console.log('Requesting geolocation...');
 
-            try {
-                // Check if Places API is ready
-                if (!placesService) {
-                    clearTimeout(overallTimeout);
-                    console.error('Places service not initialized');
-                    content.innerHTML = `
-                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-                            <p class="text-xl text-red-600">Maps not ready. Please refresh the page.</p>
-                            <button onclick="location.reload()" class="mt-4 bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700">Refresh Page</button>
-                        </div>
-                    `;
-                    return;
-                }
-
-                console.log('Starting search for:', locationName);
-                
-                // Simple text search instead of geocoding
-                console.log('Using text search for simplicity...');
-                const searchResults = await searchByText(locationName + ' tourist attractions', null);
-                
-                console.log('Search completed. Found:', searchResults.length, 'results');
-
-                if (searchResults.length === 0) {
-                    clearTimeout(overallTimeout);
-                    content.innerHTML = `
-                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-                            <p class="text-xl text-gray-600">No attractions found for "${locationName}"</p>
-                            <p class="text-gray-500 mt-2">Try searching for: Dubai, London, Paris, Tokyo, New York</p>
-                            <button onclick="showPage('home')" class="mt-4 bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700">← Back to Home</button>
-                        </div>
-                    `;
-                    return;
-                }
-
-                // Process results
-                allAttractions = [];
-                const seenIds = new Set();
-                searchResults.forEach(r => {
-                    if (!seenIds.has(r.place_id) && r.rating && r.rating >= 3.0) {
-                        seenIds.add(r.place_id);
-                        allAttractions.push(r);
-                    }
-                });
-
-                console.log('After filtering:', allAttractions.length, 'attractions');
-
-                allAttractions.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-                allAttractions = allAttractions.slice(0, 20);
-
-                console.log('Getting details for', allAttractions.length, 'attractions...');
-                const detailsPromises = allAttractions.map(a => getPlaceDetails(a.place_id));
-                const detailsResults = await Promise.all(detailsPromises);
-                allAttractions = detailsResults.filter(p => p !== null);
-
-                console.log('Got details for', allAttractions.length, 'attractions');
-
-                clearTimeout(overallTimeout);
-
-                if (allAttractions.length === 0) {
-                    content.innerHTML = `
-                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-                            <p class="text-xl text-gray-600">No detailed information available for ${locationName}</p>
-                            <button onclick="showPage('home')" class="mt-4 bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700">← Back to Home</button>
-                        </div>
-                    `;
-                    return;
-                }
-
-                currentPage = 1;
-                displayResults(locationName, locationName, 0, 0);
-
-            } catch (error) {
-                clearTimeout(overallTimeout);
-                console.error('Error in searchDynamicCity:', error);
-                content.innerHTML = `
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-                        <p class="text-xl text-red-600">Error: ${error.message}</p>
-                        <p class="text-gray-500 mt-2">Please try again or search for a different location</p>
-                        <button onclick="showPage('home')" class="mt-4 bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700">← Back to Home</button>
-                    </div>
-                `;
-            }
-        }
-
-        function displayResults(cityName, formattedAddress, lat, lng, isLocationBased = false) {
-            const content = document.getElementById('content');
-            content.innerHTML = `
-                <div class="bg-gradient-to-br from-emerald-600 to-amber-500 text-white py-16">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div class="text-center">
-                            ${isLocationBased ? '<p class="text-sm opacity-90 mb-2">📍 Based on your current location</p>' : ''}
-                            <h1 class="text-4xl md:text-5xl font-bold mb-4">${cityName}</h1>
-                            <p class="text-xl mb-2">${formattedAddress}</p>
-                            <p class="text-lg opacity-90">${allAttractions.length} attractions found</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white shadow-lg -mt-8 mx-4 md:mx-auto max-w-4xl rounded-2xl p-6 relative z-10">
-                    <div class="flex flex-col md:flex-row gap-4">
-                        <input id="mapSearchInput" type="text" placeholder="Search for another city..." 
-                               class="flex-1 pl-4 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none"/>
-                        <button onclick="searchLocation()" class="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-emerald-700">
-                            Search
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6">
-                        ${isLocationBased ? 'Attractions Near You' : 'Top Attractions'}
-                    </h2>
-                    <div id="attractionsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
-                    ${allAttractions.length > 9 ? `
-                        <div class="text-center mt-8">
-                            <button id="loadMoreAttractions" onclick="loadMoreAttractions()" 
-                                    class="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-emerald-700">
-                                Load More
-                            </button>
-                        </div>
-                    ` : ''}
-                    <div class="mt-12 text-center">
-                        <button onclick="showPage('home')" class="text-emerald-600 font-semibold hover:underline">Browse Popular Cities</button>
-                    </div>
-                </div>
-            `;
-            
-            // Initialize autocomplete on the new search input
-            setTimeout(() => {
-                const input = document.getElementById('mapSearchInput');
-                if (input && google.maps.places) {
-                    autocomplete = new google.maps.places.Autocomplete(input, {
-                        types: ['(cities)']
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    console.log('Location acquired:', position.coords);
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    
+                    // Switch to map view and show nearby attractions
+                    const icons = document.querySelectorAll('.nav-icon');
+                    icons.forEach((icon, index) => {
+                        icon.classList.remove('active');
+                        if (index === 1) icon.classList.add('active');
                     });
-                    console.log('Search autocomplete initialized');
+                    showMapView();
+                    
+                    // Search nearby after map loads
+                    setTimeout(() => {
+                        searchNearbyAttractions(userLocation);
+                    }, 500);
+                },
+                (error) => {
+                    console.error('Geolocation error:', error);
+                    let errorMessage = 'Unable to get your location. ';
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage += 'Please allow location access in your browser settings.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage += 'Your location is currently unavailable. Please check your device settings.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage += 'The request took too long. Please try again or search manually.';
+                            break;
+                    }
+                    
+                    alert(errorMessage);
+                    locationBtn.innerHTML = originalContent;
+                    locationBtn.style.pointerEvents = 'auto';
+                },
+                {
+                    enableHighAccuracy: false,
+                    timeout: 30000,
+                    maximumAge: 60000
+                }
+            );
+        }
+
+        function changeMapStyle(styleName) {
+            if (map && mapStyles[styleName]) {
+                currentMapStyle = styleName;
+                map.setOptions({ styles: mapStyles[styleName] });
+                console.log('Map style changed to:', styleName);
+            }
+        }
+
+        function showMapView() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="h-full flex flex-col">
+                    <!-- Header with Branding -->
+                    <div class="mb-4">
+                        <h1 class="text-3xl font-bold text-gray-800">
+                            Explore Map <span class="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">• TrAilvay</span>
+                        </h1>
+                    </div>
+                    
+                    <div class="flex gap-6 flex-1">
+                        <!-- Map Section -->
+                        <div class="flex-1 glass-card p-4">
+                            <div class="mb-4 flex gap-3">
+                                <div class="flex-1 flex items-center gap-3 bg-white rounded-xl px-4 py-2">
+                                    <i class="fas fa-search text-gray-400 text-lg"></i>
+                                    <input type="text" id="mapSearchInput" placeholder="Search location..." 
+                                           class="search-input" onkeypress="handleMapSearch(event)">
+                                </div>
+                                <select onchange="changeMapStyle(this.value)" class="px-4 py-2 bg-white rounded-xl border-2 border-gray-200 font-semibold text-gray-700 cursor-pointer hover:border-blue-400 transition-colors">
+                                    <option value="blue">🎨 Blue</option>
+                                    <option value="minimal">⚪ Minimal</option>
+                                    <option value="dark">🌙 Dark</option>
+                                    <option value="retro">📻 Retro</option>
+                                    <option value="vibrant">🌈 Vibrant</option>
+                                </select>
+                                <div class="location-button" onclick="useMyLocationMap()">
+                                    <i class="fas fa-location-crosshairs text-blue-600"></i>
+                                    <span class="font-semibold text-gray-700">Near Me</span>
+                                </div>
+                            </div>
+                            <div class="map-container h-[calc(100%-80px)]">
+                                <div id="map"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Attractions Sidebar -->
+                        <div class="w-96 glass-card p-6 overflow-y-auto">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Nearby Attractions</h3>
+                            <div id="attractionsList">
+                                <p class="text-gray-500 text-center py-8">Search for a location or use "Near Me" to see attractions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Initialize map with error handling
+            setTimeout(() => {
+                try {
+                    const mapDiv = document.getElementById('map');
+                    if (!mapDiv) {
+                        console.error('Map div not found');
+                        return;
+                    }
+                    
+                    map = new google.maps.Map(mapDiv, {
+                        zoom: 4,
+                        center: { lat: 20, lng: 0 },
+                        styles: mapStyles[currentMapStyle]
+                    });
+                    
+                    placesService = new google.maps.places.PlacesService(map);
+                    console.log('Map and Places service initialized successfully');
+                } catch (error) {
+                    console.error('Error initializing map:', error);
+                    alert('Failed to load map. Please refresh the page.');
                 }
             }, 100);
-            
-            currentPage = 0;
-            loadMoreAttractions();
         }
 
-        async function showCityGuide(cityName) {
-            const city = cities.find(c => c.name === cityName);
-            if (!city) return;
-
-            const content = document.getElementById('content');
-            content.innerHTML = `
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-                    <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-600"></div>
-                    <p class="mt-4 text-xl text-gray-600">Loading ${city.name}...</p>
-                </div>
-            `;
-            window.scrollTo(0, 0);
-
-            if (!placesService) {
-                const mapDiv = document.createElement('div');
-                mapDiv.id = 'temp-map';
-                mapDiv.style.display = 'none';
-                document.body.appendChild(mapDiv);
-                map = new google.maps.Map(mapDiv, { zoom: 2, center: { lat: 0, lng: 0 } });
-                placesService = new google.maps.places.PlacesService(map);
+        function useMyLocationMap() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser');
+                return;
             }
 
-            const cityLocation = { lat: city.lat, lng: city.lng };
-            const attractionResults = await searchNearbyPlaces(cityLocation, 'tourist attraction', 5000);
-            
-            allAttractions = [];
-            const seenIds = new Set();
-            attractionResults.forEach(r => {
-                if (!seenIds.has(r.place_id) && r.rating && r.rating > 3.0) {
-                    seenIds.add(r.place_id);
-                    allAttractions.push(r);
-                }
-            });
-
-            allAttractions.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-            allAttractions = allAttractions.slice(0, 30);
-
-            const detailsPromises = allAttractions.map(a => getPlaceDetails(a.place_id));
-            allAttractions = await Promise.all(detailsPromises);
-            allAttractions = allAttractions.filter(p => p !== null);
-
-            currentPage = 1;
-
-            content.innerHTML = `
-                <div class="bg-gradient-to-br from-emerald-600 to-amber-500 text-white py-16">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div class="text-center">
-                            <div class="text-6xl mb-4">${city.flag}</div>
-                            <h1 class="text-4xl md:text-5xl font-bold mb-4">${city.name}, ${city.country}</h1>
-                            <p class="text-lg opacity-90">${allAttractions.length} attractions found</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Must-See Attractions</h2>
-                    <div id="attractionsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
-                    ${allAttractions.length > 9 ? `
-                        <div class="text-center mt-8">
-                            <button id="loadMoreAttractions" onclick="loadMoreAttractions()" 
-                                    class="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-emerald-700">
-                                Load More
-                            </button>
-                        </div>
-                    ` : ''}
-                    <div class="mt-12 text-center">
-                        <button onclick="showPage('cities')" class="text-emerald-600 font-semibold">← Back to Cities</button>
-                    </div>
-                </div>
+            const locationBtn = document.querySelector('.location-button');
+            const originalContent = locationBtn.innerHTML;
+            locationBtn.innerHTML = `
+                <div class="loading-spinner"></div>
+                <span class="font-semibold text-gray-700">Locating...</span>
             `;
-            currentPage = 0;
-            loadMoreAttractions();
-        }
+            locationBtn.style.pointerEvents = 'none';
 
-        window.addEventListener('DOMContentLoaded', function() {
-            const mapDiv = document.createElement('div');
-            mapDiv.id = 'hidden-map';
-            mapDiv.style.display = 'none';
-            document.body.appendChild(mapDiv);
-            
-            map = new google.maps.Map(mapDiv, {
-                zoom: 2,
-                center: { lat: 20, lng: 0 }
-            });
-            placesService = new google.maps.places.PlacesService(map);
-            infoWindow = new google.maps.InfoWindow();
-            
-            console.log('Maps initialized, requesting user location...');
-            
-            // Automatically request user location and show nearby attractions
-            showLocationBasedAttractions();
-        });
+            console.log('Requesting geolocation from map view...');
 
-        async function showLocationBasedAttractions() {
-            const content = document.getElementById('content');
-            
-            // Show loading screen while getting location
-            content.innerHTML = `
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-                    <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-600" style="animation: spin 1s linear infinite;"></div>
-                    <h2 class="text-2xl font-bold text-gray-800 mt-6 mb-3">Finding attractions near you...</h2>
-                    <p class="text-gray-600 mb-4">Getting your location (this may take up to 30 seconds)</p>
-                    <button onclick="showPage('home')" class="text-emerald-600 hover:underline">Skip and browse manually</button>
-                </div>
-            `;
-
-            try {
-                // Get user location with longer timeout and lower accuracy requirement
-                const position = await new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) {
-                        reject(new Error('Geolocation not supported'));
-                        return;
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    console.log('Location acquired:', position.coords);
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    searchNearbyAttractions(userLocation);
+                    
+                    // Reset button
+                    setTimeout(() => {
+                        locationBtn.innerHTML = originalContent;
+                        locationBtn.style.pointerEvents = 'auto';
+                    }, 1000);
+                },
+                (error) => {
+                    console.error('Geolocation error:', error);
+                    let errorMessage = 'Unable to get your location. ';
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage += 'Please allow location access in your browser settings.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage += 'Location information unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage += 'Request timed out. Try searching manually instead.';
+                            break;
                     }
                     
-                    console.log('Requesting geolocation...');
-                    
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                            console.log('Got position:', pos.coords);
-                            resolve(pos);
-                        },
-                        (error) => {
-                            console.error('Geolocation error:', error);
-                            reject(error);
-                        },
-                        { 
-                            timeout: 30000,  // 30 seconds instead of 10
-                            enableHighAccuracy: false,  // Don't require GPS, WiFi/IP is fine
-                            maximumAge: 300000  // Accept cached position up to 5 minutes old
-                        }
-                    );
-                });
+                    alert(errorMessage);
+                    locationBtn.innerHTML = originalContent;
+                    locationBtn.style.pointerEvents = 'auto';
+                },
+                {
+                    enableHighAccuracy: false,
+                    timeout: 30000,
+                    maximumAge: 60000
+                }
+            );
+        }
 
-                userLocation = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
+        function searchNearbyAttractions(location) {
+            if (!placesService) {
+                console.error('Places service not initialized');
+                alert('Map service is not ready. Please wait a moment and try again.');
+                return;
+            }
 
-                console.log('User location acquired:', userLocation);
-
-                content.innerHTML = `
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-                        <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-600" style="animation: spin 1s linear infinite;"></div>
-                        <h2 class="text-2xl font-bold text-gray-800 mt-6">Finding attractions near you...</h2>
-                        <p class="text-gray-600">Discovering the best places to visit</p>
+            console.log('Searching for attractions near:', location);
+            
+            // Show loading in attractions list
+            const attractionsList = document.getElementById('attractionsList');
+            if (attractionsList) {
+                attractionsList.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="loading-spinner mx-auto mb-4"></div>
+                        <p class="text-gray-600">Finding attractions near you...</p>
                     </div>
                 `;
+            }
 
-                // Get city name from coordinates
-                const geocoder = new google.maps.Geocoder();
-                const latLng = new google.maps.LatLng(userLocation.lat, userLocation.lng);
+            const request = {
+                location: new google.maps.LatLng(location.lat, location.lng),
+                radius: 10000,
+                type: 'tourist_attraction'
+            };
+
+            placesService.nearbySearch(request, (results, status) => {
+                console.log('Places API response:', status, 'Results:', results?.length);
                 
-                geocoder.geocode({ location: latLng }, async (results, status) => {
-                    let cityName = 'Your Area';
+                if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                    map.setCenter(new google.maps.LatLng(location.lat, location.lng));
+                    map.setZoom(13);
                     
-                    if (status === 'OK' && results && results.length > 0) {
-                        // Find the locality (city) in the address components
-                        for (const result of results) {
-                            const cityComponent = result.address_components.find(
-                                component => component.types.includes('locality') || 
-                                           component.types.includes('administrative_area_level_2')
-                            );
-                            if (cityComponent) {
-                                cityName = cityComponent.long_name;
-                                break;
-                            }
-                        }
-                    }
-
-                    console.log('City name:', cityName);
-
-                    // Search for nearby attractions
-                    const location = new google.maps.LatLng(userLocation.lat, userLocation.lng);
-                    let attractionResults = await searchNearbyPlaces(location, 'tourist attraction', 5000);
-                    
-                    if (attractionResults.length === 0) {
-                        console.log('No tourist attractions, trying points of interest...');
-                        attractionResults = await searchNearbyPlaces(location, 'point of interest', 10000);
-                    }
-
-                    console.log('Found', attractionResults.length, 'nearby attractions');
-
-                    if (attractionResults.length === 0) {
-                        // Fallback to homepage if no attractions found
-                        console.log('No attractions found nearby, showing homepage');
-                        showPage('home');
-                        return;
-                    }
-
-                    allAttractions = [];
-                    const seenIds = new Set();
-                    attractionResults.forEach(r => {
-                        if (!seenIds.has(r.place_id) && r.rating && r.rating >= 3.0) {
-                            seenIds.add(r.place_id);
-                            allAttractions.push(r);
-                        }
+                    // Add user location marker (blue circle)
+                    clearMarkers();
+                    new google.maps.Marker({
+                        position: location,
+                        map: map,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 10,
+                            fillColor: '#3b82f6',
+                            fillOpacity: 1,
+                            strokeColor: 'white',
+                            strokeWeight: 3
+                        },
+                        title: 'Your Location',
+                        zIndex: 1000
                     });
+                    
+                    displayAttractions(results.slice(0, 20));
+                } else {
+                    console.error('No results found or API error:', status);
+                    if (attractionsList) {
+                        attractionsList.innerHTML = `
+                            <div class="text-center py-8">
+                                <i class="fas fa-map-marked-alt text-4xl text-gray-400 mb-3"></i>
+                                <p class="text-gray-600 mb-2">No attractions found nearby</p>
+                                <p class="text-sm text-gray-500">Try searching for a different location</p>
+                            </div>
+                        `;
+                    }
+                }
+            });
+        }
 
-                    allAttractions.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-                    allAttractions = allAttractions.slice(0, 30);
+        function clearMarkers() {
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+        }
 
-                    console.log('Getting details for', allAttractions.length, 'attractions...');
-                    const detailsPromises = allAttractions.map(a => getPlaceDetails(a.place_id));
-                    const detailsResults = await Promise.all(detailsPromises);
-                    allAttractions = detailsResults.filter(p => p !== null);
+        function showFavoritesView() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="h-full flex flex-col">
+                    <div class="glass-card p-8 text-center flex-1 flex items-center justify-center">
+                        <div>
+                            <i class="fas fa-heart text-6xl text-blue-600 mb-4"></i>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Your Favorites</h2>
+                            <p class="text-gray-600 mb-4">Save your favorite destinations to access them quickly</p>
+                            <p class="text-sm text-gray-500">Powered by <span class="font-semibold text-blue-600">TrAilvay</span></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-                    console.log('Successfully got details for', allAttractions.length, 'attractions');
+        function showTripsView() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="h-full flex flex-col">
+                    <div class="glass-card p-8 text-center flex-1 flex items-center justify-center">
+                        <div>
+                            <i class="fas fa-suitcase text-6xl text-blue-600 mb-4"></i>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Plan Your Trips</h2>
+                            <p class="text-gray-600 mb-6">Organize and manage your travel itineraries</p>
+                            <button class="mt-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-600 transition-all shadow-lg">
+                                Create New Trip
+                            </button>
+                            <p class="text-sm text-gray-500 mt-6">Powered by <span class="font-semibold text-blue-600">TrAilvay</span></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-                    currentPage = 1;
-                    displayResults(cityName, `Near ${cityName}`, userLocation.lat, userLocation.lng, true);
-                });
+        function showSettingsView() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="h-full flex flex-col">
+                    <div class="glass-card p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <div>
+                                    <p class="font-semibold text-gray-800">Notifications</p>
+                                    <p class="text-sm text-gray-600">Receive travel updates</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <div>
+                                    <p class="font-semibold text-gray-800">Language</p>
+                                    <p class="text-sm text-gray-600">English</p>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-400"></i>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <div>
+                                    <p class="font-semibold text-gray-800">Privacy</p>
+                                    <p class="text-sm text-gray-600">Manage your data</p>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-            } catch (error) {
-                console.log('Location request failed or denied:', error.message);
-                // Show normal homepage if location is denied or times out
-                showPage('home');
+        // Popular countries with Unsplash images
+        const popularCountries = [
+            { name: 'France', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80', description: 'Paris' },
+            { name: 'Italy', image: 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&q=80', description: 'Rome' },
+            { name: 'Spain', image: 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=600&q=80', description: 'Barcelona' },
+            { name: 'UK', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&q=80', description: 'London' },
+            { name: 'Germany', image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=600&q=80', description: 'Berlin' },
+            { name: 'Greece', image: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=600&q=80', description: 'Santorini' },
+            { name: 'Netherlands', image: 'https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=600&q=80', description: 'Amsterdam' },
+            { name: 'Switzerland', image: 'https://images.unsplash.com/photo-1527004013197-933c4bb611b3?w=600&q=80', description: 'Alps' },
+            { name: 'Austria', image: 'https://images.unsplash.com/photo-1558098329-8a9b0b92dd2f?w=600&q=80', description: 'Vienna' },
+            { name: 'Portugal', image: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=600&q=80', description: 'Lisbon' },
+            { name: 'USA', image: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=600&q=80', description: 'New York' },
+            { name: 'Japan', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80', description: 'Tokyo' }
+        ];
+
+        function handleSearch(event) {
+            if (event.key === 'Enter') {
+                performSearch();
             }
         }
+
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value;
+            if (searchTerm.trim()) {
+                searchDestination(searchTerm);
+            }
+        }
+
+        function searchDestination(destination) {
+            // Switch to map view and show results
+            const icons = document.querySelectorAll('.nav-icon');
+            icons.forEach((icon, index) => {
+                icon.classList.remove('active');
+                if (index === 1) icon.classList.add('active');
+            });
+            showMapView();
+            
+            setTimeout(() => {
+                document.getElementById('mapSearchInput').value = destination;
+                handleMapSearch({ key: 'Enter' });
+            }, 200);
+        }
+
+        function handleMapSearch(event) {
+            if (event.key === 'Enter') {
+                const searchTerm = document.getElementById('mapSearchInput').value;
+                if (searchTerm.trim() && placesService) {
+                    const request = {
+                        query: searchTerm + ' attractions',
+                        fields: ['name', 'geometry', 'rating', 'photos', 'place_id']
+                    };
+                    
+                    placesService.textSearch(request, (results, status) => {
+                        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                            clearMarkers();
+                            map.setCenter(results[0].geometry.location);
+                            map.setZoom(12);
+                            displayAttractions(results.slice(0, 20));
+                        }
+                    });
+                }
+            }
+        }
+
+        function displayAttractions(attractions) {
+            const attractionsList = document.getElementById('attractionsList');
+            clearMarkers();
+            
+            attractionsList.innerHTML = attractions.map((place, index) => {
+                const photoUrl = place.photos && place.photos[0] 
+                    ? place.photos[0].getUrl({maxWidth: 400})
+                    : 'https://via.placeholder.com/400x300?text=No+Image';
+                
+                // Create marker for each place
+                const marker = new google.maps.Marker({
+                    position: place.geometry.location,
+                    map: map,
+                    title: place.name,
+                    label: {
+                        text: String(index + 1),
+                        color: 'white',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                    },
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 15,
+                        fillColor: '#3b82f6',
+                        fillOpacity: 1,
+                        strokeColor: 'white',
+                        strokeWeight: 2
+                    }
+                });
+                
+                // Add click listener to marker
+                marker.addListener('click', () => {
+                    showPlaceDetails(place.place_id);
+                });
+                
+                markers.push(marker);
+                
+                return `
+                    <div class="attraction-card mb-4" onclick="showPlaceDetails('${place.place_id}')">
+                        <img src="${photoUrl}" alt="${place.name}" class="attraction-image">
+                        <div class="attraction-info">
+                            <div class="flex items-start justify-between mb-2">
+                                <h4 class="font-bold text-gray-800 flex-1">${index + 1}. ${place.name}</h4>
+                            </div>
+                            ${place.rating ? `
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span class="text-amber-500 font-bold">★ ${place.rating.toFixed(1)}</span>
+                                    <span class="text-gray-500">${place.user_ratings_total || 0} reviews</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showPlaceDetails(placeId) {
+            if (!placesService) return;
+            
+            const request = {
+                placeId: placeId,
+                fields: ['name', 'rating', 'user_ratings_total', 'photos', 'formatted_address', 
+                         'website', 'types', 'editorial_summary', 'reviews', 'opening_hours', 'formatted_phone_number']
+            };
+            
+            placesService.getDetails(request, (place, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    displayPlaceModal(place);
+                }
+            });
+        }
+
+        function displayPlaceModal(place) {
+            // Get up to 5 photos
+            const photos = [];
+            if (place.photos && place.photos.length > 0) {
+                for (let i = 0; i < Math.min(5, place.photos.length); i++) {
+                    photos.push(place.photos[i].getUrl({maxWidth: 800}));
+                }
+            } else {
+                photos.push('https://via.placeholder.com/800x400?text=No+Image');
+            }
+            
+            const types = place.types ? place.types.slice(0, 5).map(type => 
+                type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+            ) : [];
+            
+            const modal = document.createElement('div');
+            modal.className = 'place-detail-modal';
+            modal.innerHTML = `
+                <div class="place-detail-content">
+                    <div class="place-detail-header">
+                        <div class="photo-carousel">
+                            <div class="carousel-images" id="carouselImages">
+                                ${photos.map(photo => `
+                                    <img src="${photo}" alt="${place.name}" class="carousel-image">
+                                `).join('')}
+                            </div>
+                            ${photos.length > 1 ? `
+                                <div class="carousel-arrow left" onclick="moveCarousel(-1)">
+                                    <i class="fas fa-chevron-left text-gray-700"></i>
+                                </div>
+                                <div class="carousel-arrow right" onclick="moveCarousel(1)">
+                                    <i class="fas fa-chevron-right text-gray-700"></i>
+                                </div>
+                                <div class="carousel-controls">
+                                    ${photos.map((_, index) => `
+                                        <div class="carousel-dot ${index === 0 ? 'active' : ''}" onclick="goToSlide(${index})"></div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="close-modal" onclick="this.closest('.place-detail-modal').remove()">
+                            <i class="fas fa-times text-gray-600"></i>
+                        </div>
+                    </div>
+                    <div class="place-detail-body">
+                        <h2 class="text-3xl font-bold text-gray-800 mb-4">${place.name}</h2>
+                        
+                        ${place.rating ? `
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-amber-500 text-2xl font-bold">★ ${place.rating.toFixed(1)}</span>
+                                    <span class="text-gray-600">(${place.user_ratings_total?.toLocaleString() || 0} reviews)</span>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${types.length > 0 ? `
+                            <div class="detail-section">
+                                <h3>Categories</h3>
+                                <div class="detail-tags">
+                                    ${types.map(type => `<span class="detail-tag">${type}</span>`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${place.editorial_summary?.overview ? `
+                            <div class="detail-section">
+                                <h3>About</h3>
+                                <p>${place.editorial_summary.overview}</p>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="detail-section">
+                            <h3>Location</h3>
+                            <p><i class="fas fa-map-marker-alt text-blue-600 mr-2"></i>${place.formatted_address}</p>
+                        </div>
+                        
+                        ${place.formatted_phone_number ? `
+                            <div class="detail-section">
+                                <h3>Contact</h3>
+                                <p><i class="fas fa-phone text-blue-600 mr-2"></i>${place.formatted_phone_number}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${place.opening_hours ? `
+                            <div class="detail-section">
+                                <h3>Hours</h3>
+                                <p><i class="fas fa-clock text-blue-600 mr-2"></i>${place.opening_hours.isOpen() ? '<span class="text-green-600 font-semibold">Open Now</span>' : '<span class="text-red-600 font-semibold">Closed</span>'}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${place.website ? `
+                            <div class="detail-section">
+                                <a href="${place.website}" target="_blank" class="inline-block px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-600 transition-all shadow-lg">
+                                    <i class="fas fa-external-link-alt mr-2"></i>Visit Website
+                                </a>
+                            </div>
+                        ` : ''}
+                        
+                        ${place.reviews && place.reviews.length > 0 ? `
+                            <div class="detail-section">
+                                <h3>Recent Reviews</h3>
+                                ${place.reviews.slice(0, 3).map(review => `
+                                    <div class="bg-gray-50 rounded-xl p-4 mb-3">
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <img src="${review.profile_photo_url}" alt="${review.author_name}" class="w-10 h-10 rounded-full">
+                                            <div>
+                                                <p class="font-semibold text-gray-800">${review.author_name}</p>
+                                                <div class="text-amber-500 text-sm">★ ${review.rating}</div>
+                                            </div>
+                                        </div>
+                                        <p class="text-gray-600 text-sm">${review.text}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Initialize carousel state
+            window.currentSlide = 0;
+            window.totalSlides = photos.length;
+        }
+        
+        function moveCarousel(direction) {
+            window.currentSlide += direction;
+            if (window.currentSlide < 0) window.currentSlide = window.totalSlides - 1;
+            if (window.currentSlide >= window.totalSlides) window.currentSlide = 0;
+            updateCarousel();
+        }
+        
+        function goToSlide(index) {
+            window.currentSlide = index;
+            updateCarousel();
+        }
+        
+        function updateCarousel() {
+            const carouselImages = document.getElementById('carouselImages');
+            const dots = document.querySelectorAll('.carousel-dot');
+            
+            if (carouselImages) {
+                carouselImages.style.transform = `translateX(-${window.currentSlide * 100}%)`;
+            }
+            
+            dots.forEach((dot, index) => {
+                if (index === window.currentSlide) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            showDiscoverView();
+        });
     </script>
 </body>
 </html>
